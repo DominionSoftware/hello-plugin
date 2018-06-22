@@ -30,8 +30,16 @@ class OHIFPlugin {
     ohifPlugins[this.name] = {
       url: this.url,
       description: this.description,
+      instantiatorClass: undefined,
+      instance: undefined,
     }
     this.registry = ohifPlugins;
+  }
+
+  static finishReload(pluginName, instantiatorClass) {
+    ohifPlugins[pluginName].instantiatorClass = instantiatorClass;
+    ohifPlugins[pluginName].instance = new instantiatorClass();
+    ohifPlugins[pluginName].instance.setup();
   }
 
   static reloadPlugin(plugin) {
@@ -55,10 +63,12 @@ class OHIFPlugin {
 
 class HelloPlugin (OHIFPlugin) {
 
-  constructor() {
+  constructor(options) {
     super();
     this.name = "HelloPlugin";
-    this.url = "https://raw.githubusercontent.com/pieper/hello-plugin/master/hello.js";
+    //this.url = "https://raw.githubusercontent.com/pieper/hello-plugin/master/hello.js";
+    this.url = "http://localhost:8080/hello.js";
+    this.url = options.url || this.url;
     this.description = "Hello OHIF Plugin";
   }
 
@@ -68,3 +78,6 @@ class HelloPlugin (OHIFPlugin) {
 
 }
 
+// after code is loaded, invoke a method on the OHIFPlugin
+// class to tell it to refresh
+OHIFPlugin.finishReload('HelloPlugin', HelloPlugin);
