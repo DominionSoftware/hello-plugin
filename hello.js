@@ -5,18 +5,19 @@ class HelloPlugin extends OHIFPlugin {
   constructor(options={}) {
     super();
     this.name = "HelloPlugin";
-    //this.url = "https://raw.githubusercontent.com/pieper/hello-plugin/master/hello.js";
-    this.url = "http://localhost:8081/hello.js";
-    this.url = options.url || this.url;
     this.description = "Hello OHIF Plugin";
 
-    this.register();
   }
 
   setup() {
-    alert('Hello OHIF');
+    document.open();
+    document.write('<div id=app>Hello OHIF</div>');
+    schemaformDemo();
   }
 
 }
 
-OHIFPlugin.finishReload("HelloPlugin", HelloPlugin);
+OHIFPlugin.entryPoints["HelloPlugin"] = function() {
+  let hello = new HelloPlugin();
+  hello.setup();
+}

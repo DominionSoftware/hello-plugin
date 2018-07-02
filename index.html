@@ -9,14 +9,23 @@
 let hello;
 document.addEventListener("DOMContentLoaded", (event) => {
 
-  let url = "http://localhost:8081/hello.js";
-
-  console.log(`waiting ${url}`);
+  let helloPlugin = {
+    name: "HelloPlugin",
+    url: "http://localhost:8081/hello.js",
+    allowCaching: false,
+    scriptURLs: [
+      "https://unpkg.com/vtk.js",
+      "https://unpkg.com/react@16/umd/react.development.js",
+      "https://unpkg.com/react-dom@16/umd/react-dom.development.js",
+      "https://unpkg.com/react-jsonschema-form/dist/react-jsonschema-form.js",
+      "https://cdn.rawgit.com/pieper/sites/gh-pages/schemaform/schemaformDemo.js",
+    ]
+  };
 
   setTimeout(() => {
-    console.log(`reloading ${url}`);
-    OHIFPlugin.reloadPlugin({url});
-  }, 200);
+    document.write(`reloading plugin`);
+    OHIFPlugin.reloadPlugin(helloPlugin);
+  }, 1000);
 
 });
 
