@@ -55,7 +55,9 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
             values.next().value.then(function (result) {
                 let arrayBuffer = result.data.byteArray.buffer;
                 let dicomData = dcmjs.data.DicomMessage.readFile(arrayBuffer);
-                console.log(dicomData);
+                let dataset = dcmjs.data.DicomMetaDictionary.naturalizeDataset(dicomData.dict);
+                dataset._meta = dcmjs.data.DicomMetaDictionary.namifyDataset(dicomData.meta);
+                console.log(dataset);
             }).catch(function (err) {
                 console.log(err);
             });
