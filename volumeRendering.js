@@ -3,8 +3,17 @@
 try {
   VolumeRenderingPlugin
 } catch (error) {
-  let VolumeRenderingPlugin;
+  console.log(error);
 }
+
+
+function* getPromises(a) {
+    for(let i = 0; i < a.length; i++)
+    {
+        yield a[i];
+    }
+}
+
 
 VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
 
@@ -40,7 +49,17 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
        cornerstone.imageCache.imageCache[imageId];
        loadImagePromises.push(cornerstone.loadAndCacheImage(imageId));
     }
+    const values = getPromises(loadImagePromises);
 
+    for(let j = 0; j < loadImagePromises.length; j++) {
+        values.next().value.then(function(result) {
+            console.log(result);
+        }).catch(function (err){
+            console.log(err);
+        });
+    }
+
+    /*
     Promise.all(loadImagePromises).then(images => {
 
       let datasets = [];
@@ -127,14 +146,14 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
     actor.getProperty().setSpecularPower(8.0);
 
     // TODO - expose transfer function editor
-    /*
-    const controllerWidget = vtk.Interaction.UI.vtkVolumeController.newInstance({
-      size: [400, 150],
-      rescaleColorMap: true,
-    });
-    controllerWidget.setContainer(container);
-    controllerWidget.setupContent(renderWindow, actor);
-    */
+//
+  //  const controllerWidget = vtk.Interaction.UI.vtkVolumeController.newInstance({
+   //   size: [400, 150],
+   //   rescaleColorMap: true,
+  //  });
+ //   controllerWidget.setContainer(container);
+  //  controllerWidget.setupContent(renderWindow, actor);
+  //
 
     renderer.addVolume(actor);
     renderer.resetCamera();
@@ -143,10 +162,11 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
     renderer.updateLightsGeometryToFollowCamera();
     renderWindow.render();
   }
+*/
 
-}
+};
 
 OHIFPlugin.entryPoints["VolumeRenderingPlugin"] = function() {
   let volumeRendering = new VolumeRenderingPlugin();
   volumeRendering.setup();
-}
+};
