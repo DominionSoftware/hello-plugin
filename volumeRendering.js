@@ -21,7 +21,36 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         super();
         this.name = "VolumeRenderingPlugin";
         this.description = "VolumeRendering OHIF Plugin";
-        
+        this.volumeViewer  = vtk.Rendering.Misc.vtkGenericRenderWindow.newInstance({
+          background: [0, 0, 0],
+        });
+        this.mapper = vtk.Rendering.Core.vtkVolumeMapper.newInstance();
+
+        this.actor = vtk.Rendering.Core.vtkVolume.newInstance();
+        actor.setMapper(mapper);
+
+         // create color and opacity transfer functions
+        this.ctfun = vtk.Rendering.Core.vtkColorTransferFunction.newInstance();
+        ctfun.addRGBPoint(200.0, 0.4, 0.2, 0.0);
+        ctfun.addRGBPoint(2000.0, 1.0, 1.0, 1.0);
+        this.ofun = vtk.Common.DataModel.vtkPiecewiseFunction.newInstance();
+        this.ofun.addPoint(200.0, 0.0);
+        this.ofun.addPoint(1200.0, 0.5);
+        this.ofun.addPoint(3000.0, 0.8);
+        this.actor.getProperty().setRGBTransferFunction(0, this.ctfun);
+        this.actor.getProperty().setScalarOpacity(0, this.ofun);
+       this. actor.getProperty().setScalarOpacityUnitDistance(0, 4.5);
+        this.actor.getProperty().setInterpolationTypeToLinear();
+        this.actor.getProperty().setUseGradientOpacity(0, true);
+        this.actor.getProperty().setGradientOpacityMinimumValue(0, 15);
+        this.actor.getProperty().setGradientOpacityMinimumOpacity(0, 0.0);
+        this.actor.getProperty().setGradientOpacityMaximumValue(0, 100);
+        this.actor.getProperty().setGradientOpacityMaximumOpacity(0, 1.0);
+        this.actor.getProperty().setShade(true);
+        this.actor.getProperty().setAmbient(0.2);
+        this.actor.getProperty().setDiffuse(0.7);
+        this.actor.getProperty().setSpecular(0.3);
+        this.actor.getProperty().setSpecularPower(8.0);
     }
 
     setup() {
@@ -81,6 +110,9 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                     installed = true;
                     self.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
                  }
+                 else {
+                    self.updateVTKVolumeRenderer(multiframeDataset);
+                 }
                 console.log("Doing 5 images");
                }
                else if (loadImagePromises.length - imagesReceived < 5)
@@ -99,6 +131,8 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         if(remainder.length > 0){
             console.log("Remainde " + remainder.length);
             datasets = datasets.concat(remainder);
+            let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
+            self.updateVTKVolumeRenderer(multiframeDataset);
         }
         /*
         Promise.all(loadImagePromises).then(images => {
@@ -119,6 +153,33 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
       }
       */
 }
+updateVTKVolumeRenderer(dataset) {
+   let imageData = vtk.Common.DataModel.vtkImageData.newInstance()
+        imageData.setDimensions([dataset.Columns, dataset.Rows, dataset.NumberOfFrames]);
+        let measures = dataset.SharedFunctionalGroupsSequence.PixelMeasuresSequence;
+        imageData.setSpacing([
+          measures.PixelSpacing[1],
+          measures.PixelSpacing[0],
+          measures.SpacingBetweenSlices
+        ]);
+
+         let pixelArray = new Uint16Array(dataset.PixelData);
+        let scalarArray = vtk.Common.Core.vtkDataArray.newInstance({
+          name: "Pixels",
+          numberOfComponents: dataset.SamplesPerPixel,
+          values: pixelArray,
+        });
+        imageData.getPointData().setScalars(scalarArray);
+        this.mapper.setInputData(imageData);
+        const renderer =  this.volumeViewer.getRenderer();
+        const renderWindow =  this.volumeViewer.getRenderWindow();
+        renderWindow.render();
+}
+
+
+
+
+
       installVTKVolumeRenderer (container, dataset) {
 
         //
@@ -149,43 +210,19 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         //
         // Create a volume rendering context
         //
-        const volumeViewer = vtk.Rendering.Misc.vtkGenericRenderWindow.newInstance({
-          background: [0, 0, 0],
-        });
-        volumeViewer.setContainer(container);
-        const renderer = volumeViewer.getRenderer();
-        const renderWindow = volumeViewer.getRenderWindow();
+      
+        this.volumeViewer.setContainer(container);
+      
+
+      
+        this.mapper.setSampleDistance(1.0);
+        this.mapper.setInputData(imageData);
+        const renderer =  this.volumeViewer.getRenderer();
+        const renderWindow =  this.volumeViewer.getRenderWindow();
         renderWindow.render();
+        
 
-        const mapper = vtk.Rendering.Core.vtkVolumeMapper.newInstance();
-        mapper.setSampleDistance(1.0);
-        mapper.setInputData(imageData);
-
-        const actor = vtk.Rendering.Core.vtkVolume.newInstance();
-        actor.setMapper(mapper);
-
-        // create color and opacity transfer functions
-        const ctfun = vtk.Rendering.Core.vtkColorTransferFunction.newInstance();
-        ctfun.addRGBPoint(200.0, 0.4, 0.2, 0.0);
-        ctfun.addRGBPoint(2000.0, 1.0, 1.0, 1.0);
-        const ofun = vtk.Common.DataModel.vtkPiecewiseFunction.newInstance();
-        ofun.addPoint(200.0, 0.0);
-        ofun.addPoint(1200.0, 0.5);
-        ofun.addPoint(3000.0, 0.8);
-        actor.getProperty().setRGBTransferFunction(0, ctfun);
-        actor.getProperty().setScalarOpacity(0, ofun);
-        actor.getProperty().setScalarOpacityUnitDistance(0, 4.5);
-        actor.getProperty().setInterpolationTypeToLinear();
-        actor.getProperty().setUseGradientOpacity(0, true);
-        actor.getProperty().setGradientOpacityMinimumValue(0, 15);
-        actor.getProperty().setGradientOpacityMinimumOpacity(0, 0.0);
-        actor.getProperty().setGradientOpacityMaximumValue(0, 100);
-        actor.getProperty().setGradientOpacityMaximumOpacity(0, 1.0);
-        actor.getProperty().setShade(true);
-        actor.getProperty().setAmbient(0.2);
-        actor.getProperty().setDiffuse(0.7);
-        actor.getProperty().setSpecular(0.3);
-        actor.getProperty().setSpecularPower(8.0);
+       
 
         // TODO - expose transfer function editor
     //
