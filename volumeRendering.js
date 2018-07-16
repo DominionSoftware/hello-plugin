@@ -7,7 +7,7 @@ try {
 }
 
 
-function* getPromises(a) {
+function* getPromisesGenerator(a) {
     for(let i = 0; i < a.length; i++)
     {
         yield a[i];
@@ -44,19 +44,20 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         parent.innerHTML = "";
         parent.appendChild(pluginDiv);
 
+        // Q up the promises.
         let loadImagePromises = [];
         for (let imageId of imageIds) {
             cornerstone.imageCache.imageCache[imageId];
             loadImagePromises.push(cornerstone.loadAndCacheImage(imageId));
         }
-        const values = getPromises(loadImagePromises);
+        const generator = getPromisesGenerator(loadImagePromises);
         let datasets = [];
         let partialDataset = [];
         let remainder = [];
         var imagesReceived = 0;
-        for (let j = 0; j < loadImagePromises.length; j++) {
-            let nxt = values.next();
-
+        let nxt = generator.next();
+        while (nxt.done === false) {
+            console.log(nxt);
              nxt.value.then(function (result) {
                 let arrayBuffer = result.data.byteArray.buffer;
                 let dicomData = dcmjs.data.DicomMessage.readFile(arrayBuffer);
@@ -64,14 +65,14 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                 dataset._meta = dcmjs.data.DicomMetaDictionary.namifyDataset(dicomData.meta);
                partialDataset.push(dataset);
                imagesReceived++;
-               console.log("partialDataset.length " + partialDataset.length);
+              
                // set if we have 5 images in the dataSet...
                if (partialDataset.length >= 5)
                {
                 datasets = datasets.concat(partialDataset);
                 partialDataset = [];
-                debugger;
-                let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
+               
+                //let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
                 console.log("Doing 5 images");
                }
                else if (loadImagePromises.length - imagesReceived < 5)
@@ -84,12 +85,13 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
 
             }).catch(function (err) {
                 console.log(err);
+                break;
             });
+            nxt = generator.next();
         }
         if(remainder.length > 0){
-            console.log("Remainder");
+            console.log("Remainde " + remainder.length);
             datasets = datasets.concat(remainder);
-             let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
         }
         /*
         Promise.all(loadImagePromises).then(images => {
