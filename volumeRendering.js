@@ -68,7 +68,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                // set if we have 5 images in the dataSet...
                if (partialDataset.length >= 5)
                {
-                datasets.concat(partialDataset);
+                datasets = datasets.concat(partialDataset);
                 partialDataset = [];
                 debugger;
                 let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
@@ -76,7 +76,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                }
                else if (loadImagePromises.length - imagesReceived < 5)
                {
-                 remainder.concat(partialDataset);
+                 remainder = remainder.concat(partialDataset);
                  partialDataset = [];
                }
                 console.log("images recived " + imagesReceived)
@@ -88,7 +88,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         }
         if(remainder.length > 0){
             console.log("Remainder");
-            datasets.concat(remainder);
+            datasets = datasets.concat(remainder);
              let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
         }
         /*
