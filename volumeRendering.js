@@ -85,7 +85,6 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
 
             }).catch(function (err) {
                 console.log(err);
-                break;
             });
             nxt = generator.next();
         }
