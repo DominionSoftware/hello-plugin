@@ -26,10 +26,12 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
 
     setup() {
 
+        var installed = false;
+        var self = this;
         // reset the div that will hold this plugin
         // - remove old ones
         // - add a new one with our id
-        var installed = false;
+   
         let pluginDiv;
         while (pluginDiv = document.getElementById('volumeRenderingPlugin')) {
             pluginDiv.parentNode.removeChild(pluginDiv);
@@ -77,7 +79,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                 let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
                  if (installed === false){
                     installed = true;
-                    this.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
+                    self.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
                  }
                 console.log("Doing 5 images");
                }
