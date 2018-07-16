@@ -21,6 +21,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         super();
         this.name = "VolumeRenderingPlugin";
         this.description = "VolumeRendering OHIF Plugin";
+        this.intalled = false;
     }
 
     setup() {
@@ -67,12 +68,16 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                imagesReceived++;
               
                // set if we have 5 images in the dataSet...
-               if (partialDataset.length >= 5)
+               if (partialDataset.length >= 10)
                {
                 datasets = datasets.concat(partialDataset);
                 partialDataset = [];
                
-                //let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
+                let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
+                 if (this.intalled === false){
+                    this.intalled = true;
+                    this.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
+                 }
                 console.log("Doing 5 images");
                }
                else if (loadImagePromises.length - imagesReceived < 5)
@@ -109,7 +114,8 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
           this.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
         });
       }
-
+      */
+}
       installVTKVolumeRenderer (container, dataset) {
 
         //
@@ -195,9 +201,9 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         renderer.updateLightsGeometryToFollowCamera();
         renderWindow.render();
       }
-    */
+  
 
-    }
+   
 }
 
 OHIFPlugin.entryPoints["VolumeRenderingPlugin"] = function() {
