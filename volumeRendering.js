@@ -51,7 +51,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         }
         const values = getPromises(loadImagePromises);
         let datasets = [];
-        let subDataSet = [];
+        let partialDataset = [];
         var imagesReceived = 0;
         for (let j = 0; j < loadImagePromises.length; j++) {
             let nxt = values.next();
@@ -61,19 +61,19 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                 let dicomData = dcmjs.data.DicomMessage.readFile(arrayBuffer);
                 let dataset = dcmjs.data.DicomMetaDictionary.naturalizeDataset(dicomData.dict);
                 dataset._meta = dcmjs.data.DicomMetaDictionary.namifyDataset(dicomData.meta);
-               subDataSet.push(dataSet);
+               partialDataset.push(dataset);
                imagesReceived++;
                // set if we have 5 images in the dataSet...
-               if (subDataSet.length >= 5)
+               if (partialDataset.length >= 5)
                {
-                datasets.concat(subDataSet);
-                subDataSet = [];
+                datasets.concat(partialDataset);
+                partialDataset = [];
                }
                else if (loadImagePromises.length - imagesReceived < 5)
                {
                 
-                 datasets.concat(subDataSet);
-                 subDataSet = [];
+                 datasets.concat(partialDataset);
+                 partialDataset = [];
                }
                 console.log("images recived " + imagesReceived)
                let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
