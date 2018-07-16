@@ -64,6 +64,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                 dataset._meta = dcmjs.data.DicomMetaDictionary.namifyDataset(dicomData.meta);
                partialDataset.push(dataset);
                imagesReceived++;
+               console.log("partialDataset.length " + partialDataset.length);
                // set if we have 5 images in the dataSet...
                if (partialDataset.length >= 5)
                {
