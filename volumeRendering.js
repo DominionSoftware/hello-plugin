@@ -77,7 +77,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                 let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
                  if (installed === false){
                     installed = true;
-                    installVTKVolumeRenderer(pluginDiv, multiframeDataset)
+                    this.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
                  }
                 console.log("Doing 5 images");
                }
