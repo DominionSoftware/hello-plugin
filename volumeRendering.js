@@ -234,7 +234,7 @@ updateVTKVolumeRenderer(dataset) {
       //  controllerWidget.setupContent(renderWindow, actor);
       //
 
-        renderer.addVolume(actor);
+        renderer.addVolume(this.actor);
         renderer.resetCamera();
         renderer.getActiveCamera().zoom(1.5);
         renderer.getActiveCamera().elevation(70);
