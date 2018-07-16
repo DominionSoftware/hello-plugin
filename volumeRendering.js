@@ -80,7 +80,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                  partialDataset = [];
                }
                 console.log("images recived " + imagesReceived)
-              
+               console.log("loadImagePromises.length " + loadImagePromises.length)
 
             }).catch(function (err) {
                 console.log(err);
