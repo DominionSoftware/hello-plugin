@@ -50,19 +50,39 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
             loadImagePromises.push(cornerstone.loadAndCacheImage(imageId));
         }
         const values = getPromises(loadImagePromises);
-
+        let datasets = [];
+        let subDataSet = [];
+        var imagesReceived = 0;
         for (let j = 0; j < loadImagePromises.length; j++) {
-            values.next().value.then(function (result) {
+            let nxt = values.next();
+
+             nxt.value.then(function (result) {
                 let arrayBuffer = result.data.byteArray.buffer;
                 let dicomData = dcmjs.data.DicomMessage.readFile(arrayBuffer);
                 let dataset = dcmjs.data.DicomMetaDictionary.naturalizeDataset(dicomData.dict);
                 dataset._meta = dcmjs.data.DicomMetaDictionary.namifyDataset(dicomData.meta);
-                console.log(dataset);
+               subDataSet.push(dataSet);
+               imagesReceived++;
+               // set if we have 5 images in the dataSet...
+               if (subDataSet.length >= 5)
+               {
+                datasets.concat(subDataSet);
+                subDataSet = [];
+               }
+               else if (loadImagePromises.length - imagesReceived < 5)
+               {
+                
+                 datasets.concat(subDataSet);
+                 subDataSet = [];
+               }
+                console.log("images recived " + imagesReceived)
+               let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
+
             }).catch(function (err) {
                 console.log(err);
             });
         }
-
+        
         /*
         Promise.all(loadImagePromises).then(images => {
 
