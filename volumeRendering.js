@@ -70,6 +70,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                {
                 datasets.concat(partialDataset);
                 partialDataset = [];
+                debugger;
                 let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
                 console.log("Doing 5 images");
                }
@@ -85,7 +86,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                 console.log(err);
             });
         }
-        if(remainder.length >0){
+        if(remainder.length > 0){
             console.log("Remainder");
             datasets.concat(remainder);
              let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
