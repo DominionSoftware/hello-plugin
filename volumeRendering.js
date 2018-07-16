@@ -27,19 +27,19 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         this.mapper = vtk.Rendering.Core.vtkVolumeMapper.newInstance();
 
         this.actor = vtk.Rendering.Core.vtkVolume.newInstance();
-        actor.setMapper(mapper);
+        this.actor.setMapper(this.mapper);
 
          // create color and opacity transfer functions
         this.ctfun = vtk.Rendering.Core.vtkColorTransferFunction.newInstance();
-        ctfun.addRGBPoint(200.0, 0.4, 0.2, 0.0);
-        ctfun.addRGBPoint(2000.0, 1.0, 1.0, 1.0);
+        this.ctfun.addRGBPoint(200.0, 0.4, 0.2, 0.0);
+        this.ctfun.addRGBPoint(2000.0, 1.0, 1.0, 1.0);
         this.ofun = vtk.Common.DataModel.vtkPiecewiseFunction.newInstance();
         this.ofun.addPoint(200.0, 0.0);
         this.ofun.addPoint(1200.0, 0.5);
         this.ofun.addPoint(3000.0, 0.8);
         this.actor.getProperty().setRGBTransferFunction(0, this.ctfun);
         this.actor.getProperty().setScalarOpacity(0, this.ofun);
-       this. actor.getProperty().setScalarOpacityUnitDistance(0, 4.5);
+        this. actor.getProperty().setScalarOpacityUnitDistance(0, 4.5);
         this.actor.getProperty().setInterpolationTypeToLinear();
         this.actor.getProperty().setUseGradientOpacity(0, true);
         this.actor.getProperty().setGradientOpacityMinimumValue(0, 15);
