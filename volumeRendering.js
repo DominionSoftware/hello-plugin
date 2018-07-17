@@ -100,10 +100,12 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                 // see if we are close to the end, use the remainder array..
                 if (TotalNumberOfDatasets - datasetsReceived < NumberInPartialSet) {
                     remainderDatasets.push(dataset);
+                     console.log("remainderDatasets - push");
                 }
                 else {
                     partialDatasets.push(dataset);
                 }
+
                 // see if we have number of partial sets of images in the dataSet...
                 if (partialDatasets.length >= NumberInPartialSet) {
                     datasets = datasets.concat(partialDatasets);
@@ -119,8 +121,10 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                     }
                     console.log("Rendering images");
                 }
+
                 datasetsReceived++;
                 console.log("images received " + datasetsReceived);
+                
             }).catch(function (err) {
                 console.log(err);
             });
@@ -132,7 +136,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
             let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
             self.updateVTKVolumeRenderer(multiframeDataset);
         }
-        
+
         /*
         Promise.all(loadImagePromises).then(images => {
 
