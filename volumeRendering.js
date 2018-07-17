@@ -99,8 +99,16 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
 
                 // see if we are close to the end, use the remainder array..
                 if (TotalNumberOfDatasets - datasetsReceived < NumberInPartialSet) {
-                    remainderDatasets.push(dataset);
+                    datasets = datasets.push(dataset);
                      console.log("remainderDatasets - push");
+                    let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
+                    if (installed === false) {
+                        installed = true;
+                        self.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
+                    }
+                    else {
+                        self.updateVTKVolumeRenderer(multiframeDataset);
+                    }
                 }
                 else {
                     partialDatasets.push(dataset);
@@ -119,6 +127,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                         self.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
                     }
                     else {
+                        debugger;
                         self.updateVTKVolumeRenderer(multiframeDataset);
                     }
                     console.log("Rendering images");
@@ -130,15 +139,6 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                 console.log(err);
             });
             nxt = generator.next();
-            if (nxt.done === true){
-                debugger;
-                if (remainderDatasets.length > 0) {
-                 console.log("remainderDatasets " + remainderDatasets.length);
-                  datasets = datasets.concat(remainderDatasets);
-                  let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
-                  self.updateVTKVolumeRenderer(multiframeDataset);
-              }
-            }
         }
   
 
