@@ -130,14 +130,17 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                 console.log(err);
             });
             nxt = generator.next();
+            if (nxt.done === true){
+                debugger;
+                if (remainderDatasets.length > 0) {
+                 console.log("remainderDatasets " + remainderDatasets.length);
+                  datasets = datasets.concat(remainderDatasets);
+                  let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
+                  self.updateVTKVolumeRenderer(multiframeDataset);
+              }
+            }
         }
-        debugger;
-        if (remainderDatasets.length > 0) {
-           console.log("remainderDatasets " + remainderDatasets.length);
-            datasets = datasets.concat(remainderDatasets);
-            let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
-            self.updateVTKVolumeRenderer(multiframeDataset);
-        }
+  
 
         /*
         Promise.all(loadImagePromises).then(images => {
