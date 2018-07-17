@@ -120,7 +120,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                 if (partialDatasets.length >= NumberInPartialSet) {
                     datasets = datasets.concat(partialDatasets);
                     partialDatasets = [];
-                    debugger;
+  
                     let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
                     if (installed === false) {
                         installed = true;
