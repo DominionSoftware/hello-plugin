@@ -120,14 +120,14 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                 if (partialDatasets.length >= NumberInPartialSet) {
                     datasets = datasets.concat(partialDatasets);
                     partialDatasets = [];
-
+                    debugger;
                     let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
                     if (installed === false) {
                         installed = true;
                         self.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
                     }
                     else {
-                        debugger;
+                      
                         self.updateVTKVolumeRenderer(multiframeDataset);
                     }
                     console.log("Rendering images");
@@ -140,26 +140,6 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
             });
             nxt = generator.next();
         }
-  
-
-        /*
-        Promise.all(loadImagePromises).then(images => {
-
-          let datasets = [];
-          images.forEach(image => {
-            let arrayBuffer = image.data.byteArray.buffer;
-            let dicomData = dcmjs.data.DicomMessage.readFile(arrayBuffer);
-            let dataset = dcmjs.data.DicomMetaDictionary.naturalizeDataset(dicomData.dict);
-            dataset._meta = dcmjs.data.DicomMetaDictionary.namifyDataset(dicomData.meta);
-            datasets.push(dataset);
-          });
-
-          let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
-
-          this.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
-        });
-      }
-      */
     }
 
     updateVTKVolumeRenderer(dataset) {
