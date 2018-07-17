@@ -105,8 +105,10 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                 else {
                     partialDatasets.push(dataset);
                 }
+                datasetsReceived++;
+                console.log("images received " + datasetsReceived);
 
-                // see if we have number of partial sets of images in the dataSet...
+                // see if we have number of partial sets of images in the partialDatasets...
                 if (partialDatasets.length >= NumberInPartialSet) {
                     datasets = datasets.concat(partialDatasets);
                     partialDatasets = [];
@@ -122,14 +124,14 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                     console.log("Rendering images");
                 }
 
-                datasetsReceived++;
-                console.log("images received " + datasetsReceived);
-                
+               
+
             }).catch(function (err) {
                 console.log(err);
             });
             nxt = generator.next();
         }
+        debugger;
         if (remainderDatasets.length > 0) {
            console.log("remainderDatasets " + remainderDatasets.length);
             datasets = datasets.concat(remainderDatasets);
