@@ -127,10 +127,12 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
             nxt = generator.next();
         }
         if (remainderDatasets.length > 0) {
+           console.log("remainderDatasets " + remainderDatasets.length);
             datasets = datasets.concat(remainderDatasets);
             let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
             self.updateVTKVolumeRenderer(multiframeDataset);
         }
+        
         /*
         Promise.all(loadImagePromises).then(images => {
 
