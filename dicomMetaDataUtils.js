@@ -75,7 +75,7 @@ function diff(array){
 }
 
 
-DicomMetaDataUtils = class {
+export default class DicomMetaDataUtils {
 
     constructor(options = {}) {
 
@@ -199,4 +199,3 @@ DicomMetaDataUtils = class {
     }
 }
 
-export class DicomMetaDataUtils;
