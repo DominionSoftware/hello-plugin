@@ -1,5 +1,5 @@
 // A test of an OHIFPlugin
-import { DicomMetaDataUtils } from 'dicomMetaDataUtils.js';
+import { DicomMetaDataUtils } from 'dicomMetaDataUtils';
 try {
     VolumeRenderingPlugin
 } catch (error) {
