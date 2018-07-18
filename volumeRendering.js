@@ -172,8 +172,8 @@ class DicomMetaDataUtils {
         console.log(meanSpacing);
         var obj = {
             spacing: meanSpacing,
-            positions: ippArray
-            xyzIndex: index;
+            positions: ippArray,
+            xyzIndex: index
         }
         return obj;
     }
