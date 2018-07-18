@@ -89,6 +89,8 @@ function diff(array) {
     return resultArray;
 }
 
+
+
 function copyVector(v) {
     return new cornerstoneMath.Vector3(v.x,v.y,v.z);
 }
@@ -147,7 +149,7 @@ class DicomMetaDataUtils {
         return index;
     }
 
-    static computeZAxisSpacing(orientation, metaData) {
+    static computeZAxis(orientation, metaData) {
         var ippArray = [];
         let index = DicomMetaDataUtils.determineOrientationIndex(orientation);
 
@@ -168,7 +170,11 @@ class DicomMetaDataUtils {
         let meanSpacing = mean(diff(ippArray));
 
         console.log(meanSpacing);
-        return meanSpacing;
+        var obj = {
+            spacing: meanSpacing,
+            positions: ippArray
+        }
+        return obj;
     }
 
     static makeSlice(ipp,iop,pixels){
@@ -234,132 +240,142 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
     }
 
     setup() {
+        try {
+            let installed = false;
+            let self = this;
+            // reset the div that will hold this plugin
+            // - remove old ones
+            // - add a new one with our id
 
-        var installed = false;
-        var self = this;
-        // reset the div that will hold this plugin
-        // - remove old ones
-        // - add a new one with our id
+            let pluginDiv;
+            while (pluginDiv = document.getElementById('volumeRenderingPlugin')) {
+                pluginDiv.parentNode.removeChild(pluginDiv);
+            }
+            pluginDiv = document.createElement("div");
+            pluginDiv.id = "volumeRenderingPlugin";
 
-        let pluginDiv;
-        while (pluginDiv = document.getElementById('volumeRenderingPlugin')) {
-            pluginDiv.parentNode.removeChild(pluginDiv);
-        }
-        pluginDiv = document.createElement("div");
-        pluginDiv.id = "volumeRenderingPlugin";
+            // TODO: need a better way for OHIF to tell us what container to take over
+            const parent = document.querySelector(".viewportContainer");
 
-        // TODO: need a better way for OHIF to tell us what container to take over
-        const parent = document.querySelector(".viewportContainer");
+            const element = $('.imageViewerViewport').get(Session.get('activeViewport'));
+            const imageIds = cornerstoneTools.getToolState(element, 'stack').data[0].imageIds;
+            debugger;
+            ///////////////////////////////////////////////////////
+            // Compute the image size and spacing given the meta data we already have available.
+            let metaDataMap = new Map;
+            for (let i = 0; i < imageIds.length; i++) {
+                metaDataMap.set(imageIds[i], cornerstone.metaData.get('imagePlane', imageIds[i]));
+            }
+            let metaData0 = metaDataMap.values().next().value;
 
-        const element = $('.imageViewerViewport').get(Session.get('activeViewport'));
-        const imageIds = cornerstoneTools.getToolState(element, 'stack').data[0].imageIds;
-        debugger;
-        ///////////////////////////////////////////////////////
-        // Compute the image size and spacing given the meta data we already have available.
-        var metaDataMap = new Map;
-        for (let i = 0; i < imageIds.length; i++) {
-            metaDataMap.set(imageIds[i],cornerstone.metaData.get('imagePlane', imageIds[i]));
-        }
-        let metaData0 = metaDataMap.values().next().value;
-         
-        let cc = metaData0.columnCosines;
-        let rc = metaData0.rowCosines;
-        let cp = cc.crossVectors(cc, rc);
-        let o = DicomMetaDataUtils.determineOrientation(cp);
-
-
-        let xSpacing = metaData0.xSpacing;
-        let ySpacing = metaData0.ySpacing;
+            let cc = metaData0.columnCosines;
+            let rc = metaData0.rowCosines;
+            let cp = cc.crossVectors(cc, rc);
+            let o = DicomMetaDataUtils.determineOrientation(cp);
 
 
-        let zSpacing = DicomMetaDataUtils.computeZAxisSpacing(o, metaDataMap);
-        let xVoxels = metaData0.Columns;
-        let yVoxels = metaData0.Rows;
-        let zVoxels = metaDataMap.length;
-
-        this.imageData.setDimensions([xVoxels, yVoxels, zVoxels]);
-
-        this.imageData.setSpacing([xSpacing, ySpacing, zSpacing]);
-        // let pixelArray = new Uint16Array(dataset.PixelData);
-        // let scalarArray = vtk.Common.Core.vtkDataArray.newInstance({
-        //     name: "Pixels",
-        //     numberOfComponents: metaData0.SamplesPerPixel,
-        //     values: pixelArray,
-        // });
-
-        ///////////////////////////////////////////////////////
-
-        parent.innerHTML = "";
-        parent.appendChild(pluginDiv);
-
-        // Q up the promises.
-        let loadImagePromises = [];
-        for (let imageId of imageIds) {
-            cornerstone.imageCache.imageCache[imageId];
-            loadImagePromises.push(cornerstone.loadAndCacheImage(imageId));
-        }
-
-        // This generator provides a "one at a time" paused iterator.
-        const generator = getPromisesGenerator(loadImagePromises);
-        let datasets = [];
-        let partialDatasets = [];
-        let remainderDatasets = [];
-        var datasetsReceived = 0;
-        const TotalNumberOfDatasets = loadImagePromises.length;
-        const NumberInPartialSet = 15;
-        let nxt = generator.next();
-        while (nxt.done === false) {
-            nxt.value.then(function (result) {
-                let imageMetaData = metaDataMap.get(result.imageId);
-                let pixels = result.getPixelData();
-                
-                console.log(imageMetaData);
-                //let arrayBuffer = result.data.byteArray.buffer;
-               // let dicomData = dcmjs.data.DicomMessage.readFile(arrayBuffer);
-               // let dataset = dcmjs.data.DicomMetaDictionary.naturalizeDataset(dicomData.dict);
-              //  dataset._meta = dcmjs.data.DicomMetaDictionary.namifyDataset(dicomData.meta);
-
-                // see if we are close to the end, use the remainder array..
-                // if (TotalNumberOfDatasets - datasetsReceived < NumberInPartialSet) {
-                //     datasets = datasets.push(dataset);
-                //     console.log("remainderDatasets - push");
-                //     let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
-                //     if (installed === false) {
-                //         installed = true;
-                //         self.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
-                //     }
-                //     else {
-                //         self.updateVTKVolumeRenderer(multiframeDataset);
-                //     }
-                // }
-                // else {
-                //     partialDatasets.push(dataset);
-                // }
-                datasetsReceived++;
-                console.log("images received " + datasetsReceived);
-
-                // see if we have number of partial sets of images in the partialDatasets...
-                if (partialDatasets.length >= NumberInPartialSet) {
-                    datasets = datasets.concat(partialDatasets);
-                    partialDatasets = [];
-
-                    let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
-                    if (installed === false) {
-                        installed = true;
-                        self.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
-                    }
-                    else {
-
-                        self.updateVTKVolumeRenderer(multiframeDataset);
-                    }
-                    console.log("Rendering images");
-                }
+            let xSpacing = metaData0.xSpacing;
+            let ySpacing = metaData0.ySpacing;
 
 
-            }).catch(function (err) {
-                console.log(err);
+            let zAxis = DicomMetaDataUtils.computeZAxis(o, metaDataMap);
+            let zSpacing = zAxis.spacing;
+            let xVoxels = metaData0.Columns;
+            let yVoxels = metaData0.Rows;
+            let zVoxels = metaDataMap.length;
+
+            this.imageData.setDimensions([xVoxels, yVoxels, zVoxels]);
+
+            this.imageData.setSpacing([xSpacing, ySpacing, zSpacing]);
+            let pixelArray = new Int16Array(xVoxels * yVoxels * zVoxels);
+
+            let scalarArray = vtk.Common.Core.vtkDataArray.newInstance({
+                name: "Pixels",
+                numberOfComponents: metaData0.SamplesPerPixel,
+                values: pixelArray,
             });
-            nxt = generator.next();
+            this.imageData.getPointData().setScalars(scalarArray);
+            ///////////////////////////////////////////////////////
+
+            parent.innerHTML = "";
+            parent.appendChild(pluginDiv);
+
+            // Q up the promises.
+            let loadImagePromises = [];
+            for (let imageId of imageIds) {
+                cornerstone.imageCache.imageCache[imageId];
+                loadImagePromises.push(cornerstone.loadAndCacheImage(imageId));
+            }
+
+            // This generator provides a "one at a time" paused iterator.
+            const generator = getPromisesGenerator(loadImagePromises);
+            let datasets = [];
+            let partialDatasets = [];
+            let remainderDatasets = [];
+            var datasetsReceived = 0;
+            const TotalNumberOfDatasets = loadImagePromises.length;
+            const NumberInPartialSet = 15;
+            let nxt = generator.next();
+            while (nxt.done === false) {
+                nxt.value.then(function (result) {
+                    debugger;
+                    let imageMetaData = metaDataMap.get(result.imageId);
+
+                    console.log(imageMetaData.imagePositionPatient);
+                    let zIndex = zAxis.findIndex(imageMetaData.imagePositionPatient.z);
+                    console.log(zIndex);
+                    let pixels = result.getPixelData();
+
+                    //let arrayBuffer = result.data.byteArray.buffer;
+                    // let dicomData = dcmjs.data.DicomMessage.readFile(arrayBuffer);
+                    // let dataset = dcmjs.data.DicomMetaDictionary.naturalizeDataset(dicomData.dict);
+                    //  dataset._meta = dcmjs.data.DicomMetaDictionary.namifyDataset(dicomData.meta);
+
+                    // see if we are close to the end, use the remainder array..
+                    // if (TotalNumberOfDatasets - datasetsReceived < NumberInPartialSet) {
+                    //     datasets = datasets.push(dataset);
+                    //     console.log("remainderDatasets - push");
+                    //     let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
+                    //     if (installed === false) {
+                    //         installed = true;
+                    //         self.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
+                    //     }
+                    //     else {
+                    //         self.updateVTKVolumeRenderer(multiframeDataset);
+                    //     }
+                    // }
+                    // else {
+                    //     partialDatasets.push(dataset);
+                    // }
+                    datasetsReceived++;
+                    console.log("images received " + datasetsReceived);
+
+                    // see if we have number of partial sets of images in the partialDatasets...
+                    // if (partialDatasets.length >= NumberInPartialSet) {
+                    //     datasets = datasets.concat(partialDatasets);
+                    //     partialDatasets = [];
+                    //
+                    //     let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
+                    //     if (installed === false) {
+                    //         installed = true;
+                    //         self.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
+                    //     }
+                    //     else {
+                    //
+                    //         self.updateVTKVolumeRenderer(multiframeDataset);
+                    //     }
+                    //     console.log("Rendering images");
+                    // }
+
+
+                }).catch(function (err) {
+                    console.log(err);
+                });
+                nxt = generator.next();
+            }
+        }
+        catch(error) {
+            console.log(error);
         }
     }
 
@@ -379,7 +395,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
             numberOfComponents: dataset.SamplesPerPixel,
             values: pixelArray,
         });
-        imageData.getPointData().setScalars(scalarArray);
+
         this.mapper.setInputData(imageData);
         const renderer = this.volumeViewer.getRenderer();
         const renderWindow = this.volumeViewer.getRenderWindow();
