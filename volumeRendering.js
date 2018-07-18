@@ -86,7 +86,7 @@ class DicomMetaDataUtils {
 
     static computeZAxisSpacing(orientation, metaData) {
         var ippArray = [];
-        let index = determineOrientationIndex(orientation);
+        let index = DicomMetaDataUtils.determineOrientationIndex(orientation);
 
         for (let i = 0; i < metaData.length; i++) {
             let ipp = metaData.imagePlane.imagePositionPatient;
