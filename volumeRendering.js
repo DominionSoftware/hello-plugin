@@ -89,7 +89,13 @@ function diff(array) {
     return resultArray;
 }
 
+function realsApproximatelyEqual(a,b,eps = 0.00001){
+  return abs(a-b) < eps;
+}
 
+function findReal(element, index, array) {
+  return realsApproximatelyEqual(element,array[index]);
+}
 
 function copyVector(v) {
     return new cornerstoneMath.Vector3(v.x,v.y,v.z);
@@ -324,11 +330,11 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                     console.log(imageMetaData.imagePositionPatient);
                     let sliceIndex = 0;
                     if (zAxis.xyzIndex == 0) {
-                        sliceIndex = zAxis.positions.findIndex(imageMetaData.imagePositionPatient.x);
+                        sliceIndex = zAxis.positions.findIndex(findReal,imageMetaData.imagePositionPatient.x);
                     } else if (zAxis.xyzIndex == 1)
-                        sliceIndex = zAxis.positions.findIndex(imageMetaData.imagePositionPatient.y);
+                        sliceIndex = zAxis.positions.findIndex(findReal,imageMetaData.imagePositionPatient.y);
                     else{
-                        sliceIndex = zAxis.positions.findIndex(imageMetaData.imagePositionPatient.z);
+                        sliceIndex = zAxis.positions.findIndex(findReal,imageMetaData.imagePositionPatient.z);
                     }
                     console.log(sliceIndex);
                     let pixels = result.getPixelData();
