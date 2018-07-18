@@ -1,5 +1,4 @@
 // A test of an OHIFPlugin
-import { OHIF } from 'meteor/ohif:core';
 import { DicomMetaDataUtils } from 'dicomMetaDataUtils.js';
 try {
     VolumeRenderingPlugin
@@ -78,7 +77,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         var imageIdsAndMeta = [];
         for (let imageId of imageIds) {
             var obj = {
-                meta: OHIF.viewer.metadataProvider.getMetadata(imageId),
+                meta: cornerstone.getMetadata('imagePlane',imageId),
                 id: imageId
             };
             imageIdsAndMeta.push(obj);
