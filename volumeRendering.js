@@ -151,8 +151,8 @@ class DicomMetaDataUtils {
         var ippArray = [];
         let index = DicomMetaDataUtils.determineOrientationIndex(orientation);
 
-        for (let i = 0; i < metaData.length; i++) {
-            let ipp = metaData[i].meta.imagePositionPatient;
+        for (var value of metaData.values()) {
+            let ipp = value.imagePositionPatient;
             if (index === 0) {
                 ippArray.push(ipp.x);
             } else if (index === 1) {
@@ -256,16 +256,12 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         debugger;
         ///////////////////////////////////////////////////////
         // Compute the image size and spacing given the meta data we already have available.
-        var metaDataArray = [];
+        var metaDataMap = new Map;
         for (let i = 0; i < imageIds.length; i++) {
-          var obj = {
-            meta: cornerstone.metaData.get('imagePlane', imageIds[i]),
-            Id: imageIds[i]
-          };
-            metaDataArray.push(obj);
+            metaDataMap.set(imageIds[i],cornerstone.metaData.get('imagePlane', imageIds[i]));
         }
-
-        let metaData0 = metaDataArray[0].meta;
+        let metaData0 = metaDataMap.values().next().value;
+         
         let cc = metaData0.columnCosines;
         let rc = metaData0.rowCosines;
         let cp = cc.crossVectors(cc, rc);
@@ -276,7 +272,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         let ySpacing = metaData0.ySpacing;
 
 
-        let zSpacing = DicomMetaDataUtils.computeZAxisSpacing(o, metaDataArray);
+        let zSpacing = DicomMetaDataUtils.computeZAxisSpacing(o, metaDataMap);
         let xVoxels = metaData0.Columns;
         let yVoxels = metaData0.Rows;
         let zVoxels = metaDataArray.length;
@@ -314,7 +310,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         let nxt = generator.next();
         while (nxt.done === false) {
             nxt.value.then(function (result) {
-                let imageMetaData = metaDataArray[result.imageId];
+                let imageMetaData = metaDataMap[result.imageId];
                 //let arrayBuffer = result.data.byteArray.buffer;
                // let dicomData = dcmjs.data.DicomMessage.readFile(arrayBuffer);
                // let dataset = dcmjs.data.DicomMetaDictionary.naturalizeDataset(dicomData.dict);
