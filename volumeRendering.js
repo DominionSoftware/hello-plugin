@@ -9,6 +9,107 @@ try {
 }
 
 
+//TODO separate file? How to do.
+/*************************************************************************************************************************/
+
+function sum(array){
+    let sum = 0;
+    for(let i = 0; i < array.length; i++){
+        sum += array[i];
+    }
+    return sum;
+}
+function mean(array){
+    return sum(array) / array.length;
+}
+
+function diff(array){
+    let resultArray = [];
+    for(let i = 1; i < array.length; i++){
+        resultArray.push(array[i] - array[i-1]);
+    }
+    return resultArray;
+}
+
+
+ export class DicomMetaDataUtils {
+
+    constructor() {
+
+    }
+
+     static determineOrientation(v){
+
+        let axis = undefined;
+        const oX = v.x < 0 ? 'R' : 'L';
+        const oY = v.y < 0 ? 'A' : 'P';
+        const oZ = v.z < 0 ? 'I' : 'S';
+
+        const aX = Math.abs(v.x);
+        const aY = Math.abs(v.y);
+        const aZ = Math.abs(v.z);
+        const obliqueThreshold = 0.8;
+        if (aX > obliqueThreshold && aX > aY && aX > aZ) {
+            axis = oX;
+        }
+        else if (aY > obliqueThreshold && aY > aX && aY > aZ) {
+            axis = oY;
+        }
+        else if (aZ > obliqueThreshold && aZ > aX && aZ > aY) {
+            axis = oZ;
+        }
+        this.orientation = axis;
+        return axis;
+    }
+
+    static determineOrientationIndex(orientation) {
+        var o = orientation;
+        var index = undefined;
+        switch(o) {
+            case 'A':
+            case 'P':
+                index = 1;
+                break;
+            case 'L':
+            case 'R':
+                index = 0;
+                break;
+            case 'S':
+            case 'I':
+                index = 2;
+                break;
+            default:
+                console.assert(false, " OBLIQUE NOT SUPPORTED");
+                break;
+        }
+        return index;
+    }
+
+    static computeZAxisSpacing(orientation,metaData)
+    {
+      ippArray = [];
+       let index = determineOrientationIndex(orientation);
+
+       for(let i = 0; i < metaData.length; i++) {
+          let ipp = metaData.imagePlane.imagePositionPatient;
+          if (index === 0) {
+              ippArray.push(ipp.x);
+          } else if (index === 1){
+              ippArray.push(ipp.y);
+          } else {
+              ippArray.push(ipp.z);
+          }
+       }
+
+        ippArray.sort(function(a, b){return a - b;});
+        let meanSpacing = mean(diff(ippArray));
+
+        console.log(meanSpacing);
+        return meanSpacing;
+}
+
+/*************************************************************************************************************************/
+
 function* getPromisesGenerator(a) {
     for (let i = 0; i < a.length; i++) {
         yield a[i];
@@ -53,6 +154,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         this.actor.getProperty().setDiffuse(0.7);
         this.actor.getProperty().setSpecular(0.3);
         this.actor.getProperty().setSpecularPower(8.0);
+        this.imageData = vtk.Common.DataModel.vtkImageData.newInstance();
     }
 
     setup() {
@@ -76,15 +178,41 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         const element = $('.imageViewerViewport').get(Session.get('activeViewport'));
         const imageIds = cornerstoneTools.getToolState(element, 'stack').data[0].imageIds;
 
-
-        debugger;
-        var imageIdsAndMeta = [];
+       / **********************************************/
+       // Compute the image size and spacing given the meta data we already have available.
+       var metaDataArray = [];
        for (let i = 0; i < imageIds.length; i++) {
            var md = cornerstone.metaData.get('imagePlane',imageIds[i]);
+           metaDataArray.push(md);
         }
 
+        let metaData0 = metaDataArray[0];
+        let cc = metaData0.imagePlane.columnCosines;
+        let rc = metaData0.imagePlane.rowCosines;
+        let cp = cc.crossVectors(cc, rc);
+        let o = DicomMetaDataUtils.determineOrientation(cp);
 
 
+        let xSpacing = metaData0.imagePlane.xSpacing;
+        Let ySpacing = metaData0.imagePlane.ySpacing;
+
+     
+        Let zSpacing = DicomMetaDataUtils.computeZAxisSpacing(o,metaDataArray);
+        let xVoxels = metaData0.Columns;
+        let yVoxels = metaData0.Rows;
+        let zVoxels = metaDataArray.length;
+
+        this.imageData.setDimensions([xVoxels, yVoxels, zVoxels]);
+
+        this.imageData.setSpacing([ xSpacing,ySpacing,zSpacing]);
+        let pixelArray = new Uint16Array(dataset.PixelData);
+        let scalarArray = vtk.Common.Core.vtkDataArray.newInstance({
+            name: "Pixels",
+            numberOfComponents: metaData0.SamplesPerPixel,
+            values: pixelArray,
+        });
+
+      / **********************************************/
 
         parent.innerHTML = "";
         parent.appendChild(pluginDiv);
@@ -95,6 +223,8 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
             cornerstone.imageCache.imageCache[imageId];
             loadImagePromises.push(cornerstone.loadAndCacheImage(imageId));
         }
+
+        // This generator provides a "one at a time" paused iterator.
         const generator = getPromisesGenerator(loadImagePromises);
         let datasets = [];
         let partialDatasets = [];
