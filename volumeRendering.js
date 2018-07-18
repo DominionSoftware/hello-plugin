@@ -5,7 +5,66 @@ try {
 } catch (error) {
     let VolumeRenderingPlugin;
 }
+//TODO separate file? How to do.
+/*************************************************************************************************************************/
+class Slice {
+    constructor() {
+        this.imagePositionPatient = new cornerstoneMath.Vector3(0,0,0);
+        this.xSpacing = 1.0;
+        this.ySpacing = 1.0;
+        this.zSpacing = 1.0;
+        this.imageOrientationPatient = [];
+        this.flipX = false;
+        this.orientation = "";
+        this.pixelData = undefined;
+    }
 
+    setImagePositionPatient(ipp){
+        this.imagePositionPatient = new cornerstoneMath.Vector3(ipp.x,ipp.y,ipp.z);
+    }
+
+    setImageOrientationPatient(iop){
+        this.imageOrientationPatient = [];
+        this.imageOrientationPatient = iop;
+    }
+
+    setXSpacing(s) {
+        this.xSpacing = s;
+    }
+
+    setYSpacing(s) {
+        this.ySpacing = s;
+    }
+
+    setZSpacing(s) {
+        this.zSpacing = s;
+    }
+
+    setFlipX(tf){
+        this.flipX = tf;
+    }
+
+    setOrientation(o){
+        this.orientation = o;
+    }
+
+    print(){
+        try {
+            if (this.imageOrientationPatient === 'undefined') {
+                console.assert(false);
+            }
+            let iop = this.imageOrientationPatient;
+            let xs = this.xSpacing;
+            let ys = this.ySpacing;
+            let zs = this.zSpacing;
+            let ipp = this.imagePositionPatient;
+            console.log(iop[0].x, iop[0].y, iop[0].z, iop[1].x, iop[1].y, iop[1].z, xs, ys, zs, ipp.x, ipp.y, ipp.z);
+        }
+        catch(error) {
+            console.assert(false);
+        }
+    }
+}
 
 //TODO separate file? How to do.
 /*************************************************************************************************************************/
@@ -28,6 +87,10 @@ function diff(array) {
         resultArray.push(array[i] - array[i - 1]);
     }
     return resultArray;
+}
+
+function copyVector(v) {
+    return new cornerstoneMath.Vector3(v.x,v.y,v.z);
 }
 
 
@@ -89,7 +152,7 @@ class DicomMetaDataUtils {
         let index = DicomMetaDataUtils.determineOrientationIndex(orientation);
 
         for (let i = 0; i < metaData.length; i++) {
-            let ipp = metaData[i].imagePositionPatient;
+            let ipp = metaData[i].meta.imagePositionPatient;
             if (index === 0) {
                 ippArray.push(ipp.x);
             } else if (index === 1) {
@@ -106,6 +169,19 @@ class DicomMetaDataUtils {
 
         console.log(meanSpacing);
         return meanSpacing;
+    }
+
+    static makeSlice(ipp,iop,pixels){
+        let s = new Slice();
+        let newIPP = copyVector(ipp);
+        s.setImagePositionPatient(newIPP);
+        s.setZSpacing(spacingZ);
+        s.setYSpacing(spacingY);
+        s.setXSpacing(spacingX);
+        s.setOrientation(orientation);
+        s.setImageOrientationPatient(iop);
+        s.pixelData = pixels;
+        return s;
     }
 }
 
@@ -182,11 +258,14 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         // Compute the image size and spacing given the meta data we already have available.
         var metaDataArray = [];
         for (let i = 0; i < imageIds.length; i++) {
-            var md = cornerstone.metaData.get('imagePlane', imageIds[i]);
-            metaDataArray.push(md);
+          var obj = {
+            meta: md = cornerstone.metaData.get('imagePlane', imageIds[i]),
+            Id: imageIds[i]
+          };
+            metaDataArray.push(obj);
         }
 
-        let metaData0 = metaDataArray[0];
+        let metaData0 = metaDataArray[0].meta;
         let cc = metaData0.columnCosines;
         let rc = metaData0.rowCosines;
         let cp = cc.crossVectors(cc, rc);
@@ -235,28 +314,28 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         let nxt = generator.next();
         while (nxt.done === false) {
             nxt.value.then(function (result) {
-                // make a dataset
-                let arrayBuffer = result.data.byteArray.buffer;
-                let dicomData = dcmjs.data.DicomMessage.readFile(arrayBuffer);
-                let dataset = dcmjs.data.DicomMetaDictionary.naturalizeDataset(dicomData.dict);
-                dataset._meta = dcmjs.data.DicomMetaDictionary.namifyDataset(dicomData.meta);
+                let imageMetaData = metaDataArray[result.imageId];
+                //let arrayBuffer = result.data.byteArray.buffer;
+               // let dicomData = dcmjs.data.DicomMessage.readFile(arrayBuffer);
+               // let dataset = dcmjs.data.DicomMetaDictionary.naturalizeDataset(dicomData.dict);
+              //  dataset._meta = dcmjs.data.DicomMetaDictionary.namifyDataset(dicomData.meta);
 
                 // see if we are close to the end, use the remainder array..
-                if (TotalNumberOfDatasets - datasetsReceived < NumberInPartialSet) {
-                    datasets = datasets.push(dataset);
-                    console.log("remainderDatasets - push");
-                    let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
-                    if (installed === false) {
-                        installed = true;
-                        self.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
-                    }
-                    else {
-                        self.updateVTKVolumeRenderer(multiframeDataset);
-                    }
-                }
-                else {
-                    partialDatasets.push(dataset);
-                }
+                // if (TotalNumberOfDatasets - datasetsReceived < NumberInPartialSet) {
+                //     datasets = datasets.push(dataset);
+                //     console.log("remainderDatasets - push");
+                //     let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
+                //     if (installed === false) {
+                //         installed = true;
+                //         self.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
+                //     }
+                //     else {
+                //         self.updateVTKVolumeRenderer(multiframeDataset);
+                //     }
+                // }
+                // else {
+                //     partialDatasets.push(dataset);
+                // }
                 datasetsReceived++;
                 console.log("images received " + datasetsReceived);
 
