@@ -105,7 +105,7 @@ function diff(array){
 
         for (i = 0; i < imageIDsAndMetaData.length; i++) {
             // compute the spacing along the orthogonal axis
-            let metaForImage = imageIDsAndMetaData.md);
+            let metaForImage = imageIDsAndMetaData.md;
             let ipp = metaForImage.imagePlane.imagePositionPatient;
             if (index === 0) {
                 ippArray.push(ipp.x);
@@ -218,7 +218,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         const imageIds = cornerstoneTools.getToolState(element, 'stack').data[0].imageIds;
 
 
-
+        debugger;
         var imageIdsAndMeta = [];
         for (let imageId of imageIds) {
             var obj = {
