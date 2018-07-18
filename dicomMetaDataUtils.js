@@ -75,7 +75,7 @@ function diff(array){
 }
 
 
- class DicomMetaDataUtils {
+ export class DicomMetaDataUtils {
 
     constructor(options = {}) {
 
