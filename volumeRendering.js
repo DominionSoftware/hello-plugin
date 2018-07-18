@@ -187,14 +187,14 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         }
 
         let metaData0 = metaDataArray[0];
-        let cc = metaData0.imagePlane.columnCosines;
-        let rc = metaData0.imagePlane.rowCosines;
+        let cc = metaData0.columnCosines;
+        let rc = metaData0.rowCosines;
         let cp = cc.crossVectors(cc, rc);
         let o = DicomMetaDataUtils.determineOrientation(cp);
 
 
-        let xSpacing = metaData0.imagePlane.xSpacing;
-        let ySpacing = metaData0.imagePlane.ySpacing;
+        let xSpacing = metaData0.xSpacing;
+        let ySpacing = metaData0.ySpacing;
 
 
         let zSpacing = DicomMetaDataUtils.computeZAxisSpacing(o, metaDataArray);
