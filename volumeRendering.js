@@ -90,7 +90,7 @@ function diff(array) {
 }
 
 function realsApproximatelyEqual(a,b,eps = 0.00001){
-  return abs(a-b) < eps;
+  return Math.abs(a-b) < eps;
 }
 
 function findReal(element, index, array) {
