@@ -322,7 +322,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                     let imageMetaData = metaDataMap.get(result.imageId);
 
                     console.log(imageMetaData.imagePositionPatient);
-                    let zIndex = zAxis.findIndex(imageMetaData.imagePositionPatient.z);
+                    let zIndex = zAxis.positions.findIndex(imageMetaData.imagePositionPatient.z);
                     console.log(zIndex);
                     let pixels = result.getPixelData();
 
