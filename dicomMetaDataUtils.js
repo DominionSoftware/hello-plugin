@@ -199,3 +199,4 @@ DicomMetaDataUtils = class {
     }
 }
 
+export class DicomMetaDataUtils;
