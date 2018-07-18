@@ -85,7 +85,7 @@ class DicomMetaDataUtils {
     }
 
     static computeZAxisSpacing(orientation, metaData) {
-        vst ippArray = [];
+        var ippArray = [];
         let index = determineOrientationIndex(orientation);
 
         for (let i = 0; i < metaData.length; i++) {
