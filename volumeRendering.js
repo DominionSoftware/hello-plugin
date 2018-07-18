@@ -173,6 +173,7 @@ class DicomMetaDataUtils {
         var obj = {
             spacing: meanSpacing,
             positions: ippArray
+            xyzIndex: index;
         }
         return obj;
     }
@@ -320,10 +321,16 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                 nxt.value.then(function (result) {
                     debugger;
                     let imageMetaData = metaDataMap.get(result.imageId);
-
                     console.log(imageMetaData.imagePositionPatient);
-                    let zIndex = zAxis.positions.findIndex(imageMetaData.imagePositionPatient.z);
-                    console.log(zIndex);
+                    let sliceIndex = 0;
+                    if (zAxis.xyzIndex == 0) {
+                        sliceIndex = zAxis.positions.findIndex(imageMetaData.imagePositionPatient.x);
+                    } else if (zAxis.xyzIndex == 1)
+                        sliceIndex = zAxis.positions.findIndex(imageMetaData.imagePositionPatient.y);
+                    else{
+                        sliceIndex = zAxis.positions.findIndex(imageMetaData.imagePositionPatient.z);
+                    }
+                    console.log(sliceIndex);
                     let pixels = result.getPixelData();
 
                     //let arrayBuffer = result.data.byteArray.buffer;
