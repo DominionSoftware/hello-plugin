@@ -1,5 +1,5 @@
 // A test of an OHIFPlugin
- import {DicomMetaDataUtils} from "./dicomMetaDataUtils.js"
+import {DicomMetaDataUtils} from "./dicomMetaDataUtils.js"
 
 
 try {
@@ -12,33 +12,34 @@ try {
 //TODO separate file? How to do.
 /*************************************************************************************************************************/
 
-function sum(array){
+function sum(array) {
     let sum = 0;
-    for(let i = 0; i < array.length; i++){
+    for (let i = 0; i < array.length; i++) {
         sum += array[i];
     }
     return sum;
 }
-function mean(array){
+
+function mean(array) {
     return sum(array) / array.length;
 }
 
-function diff(array){
+function diff(array) {
     let resultArray = [];
-    for(let i = 1; i < array.length; i++){
-        resultArray.push(array[i] - array[i-1]);
+    for (let i = 1; i < array.length; i++) {
+        resultArray.push(array[i] - array[i - 1]);
     }
     return resultArray;
 }
 
 
- export class DicomMetaDataUtils {
+export class DicomMetaDataUtils {
 
     constructor() {
 
     }
 
-     static determineOrientation(v){
+    static determineOrientation(v) {
 
         let axis = undefined;
         const oX = v.x < 0 ? 'R' : 'L';
@@ -65,7 +66,7 @@ function diff(array){
     static determineOrientationIndex(orientation) {
         var o = orientation;
         var index = undefined;
-        switch(o) {
+        switch (o) {
             case 'A':
             case 'P':
                 index = 1;
@@ -85,27 +86,29 @@ function diff(array){
         return index;
     }
 
-    static computeZAxisSpacing(orientation,metaData)
-    {
-      ippArray = [];
-       let index = determineOrientationIndex(orientation);
+    static computeZAxisSpacing(orientation, metaData) {
+        ippArray = [];
+        let index = determineOrientationIndex(orientation);
 
-       for(let i = 0; i < metaData.length; i++) {
-          let ipp = metaData.imagePlane.imagePositionPatient;
-          if (index === 0) {
-              ippArray.push(ipp.x);
-          } else if (index === 1){
-              ippArray.push(ipp.y);
-          } else {
-              ippArray.push(ipp.z);
-          }
-       }
+        for (let i = 0; i < metaData.length; i++) {
+            let ipp = metaData.imagePlane.imagePositionPatient;
+            if (index === 0) {
+                ippArray.push(ipp.x);
+            } else if (index === 1) {
+                ippArray.push(ipp.y);
+            } else {
+                ippArray.push(ipp.z);
+            }
+        }
 
-        ippArray.sort(function(a, b){return a - b;});
+        ippArray.sort(function (a, b) {
+            return a - b;
+        });
         let meanSpacing = mean(diff(ippArray));
 
         console.log(meanSpacing);
         return meanSpacing;
+    }
 }
 
 /*************************************************************************************************************************/
@@ -115,7 +118,6 @@ function* getPromisesGenerator(a) {
         yield a[i];
     }
 }
-
 
 
 VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
@@ -178,12 +180,12 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         const element = $('.imageViewerViewport').get(Session.get('activeViewport'));
         const imageIds = cornerstoneTools.getToolState(element, 'stack').data[0].imageIds;
 
-       / **********************************************/
-       // Compute the image size and spacing given the meta data we already have available.
-       var metaDataArray = [];
-       for (let i = 0; i < imageIds.length; i++) {
-           var md = cornerstone.metaData.get('imagePlane',imageIds[i]);
-           metaDataArray.push(md);
+        ///////////////////////////////////////////////////////
+        // Compute the image size and spacing given the meta data we already have available.
+        var metaDataArray = [];
+        for (let i = 0; i < imageIds.length; i++) {
+            var md = cornerstone.metaData.get('imagePlane', imageIds[i]);
+            metaDataArray.push(md);
         }
 
         let metaData0 = metaDataArray[0];
@@ -194,25 +196,25 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
 
 
         let xSpacing = metaData0.imagePlane.xSpacing;
-        Let ySpacing = metaData0.imagePlane.ySpacing;
+        let ySpacing = metaData0.imagePlane.ySpacing;
 
-     
-        Let zSpacing = DicomMetaDataUtils.computeZAxisSpacing(o,metaDataArray);
+
+        let zSpacing = DicomMetaDataUtils.computeZAxisSpacing(o, metaDataArray);
         let xVoxels = metaData0.Columns;
         let yVoxels = metaData0.Rows;
         let zVoxels = metaDataArray.length;
 
         this.imageData.setDimensions([xVoxels, yVoxels, zVoxels]);
 
-        this.imageData.setSpacing([ xSpacing,ySpacing,zSpacing]);
-        let pixelArray = new Uint16Array(dataset.PixelData);
-        let scalarArray = vtk.Common.Core.vtkDataArray.newInstance({
-            name: "Pixels",
-            numberOfComponents: metaData0.SamplesPerPixel,
-            values: pixelArray,
-        });
+        this.imageData.setSpacing([xSpacing, ySpacing, zSpacing]);
+        // let pixelArray = new Uint16Array(dataset.PixelData);
+        // let scalarArray = vtk.Common.Core.vtkDataArray.newInstance({
+        //     name: "Pixels",
+        //     numberOfComponents: metaData0.SamplesPerPixel,
+        //     values: pixelArray,
+        // });
 
-      / **********************************************/
+        ///////////////////////////////////////////////////////
 
         parent.innerHTML = "";
         parent.appendChild(pluginDiv);
@@ -244,7 +246,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                 // see if we are close to the end, use the remainder array..
                 if (TotalNumberOfDatasets - datasetsReceived < NumberInPartialSet) {
                     datasets = datasets.push(dataset);
-                     console.log("remainderDatasets - push");
+                    console.log("remainderDatasets - push");
                     let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
                     if (installed === false) {
                         installed = true;
@@ -264,20 +266,19 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                 if (partialDatasets.length >= NumberInPartialSet) {
                     datasets = datasets.concat(partialDatasets);
                     partialDatasets = [];
-  
+
                     let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
                     if (installed === false) {
                         installed = true;
                         self.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
                     }
                     else {
-                      
+
                         self.updateVTKVolumeRenderer(multiframeDataset);
                     }
                     console.log("Rendering images");
                 }
 
-               
 
             }).catch(function (err) {
                 console.log(err);
