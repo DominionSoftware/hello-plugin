@@ -179,7 +179,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
 
         const element = $('.imageViewerViewport').get(Session.get('activeViewport'));
         const imageIds = cornerstoneTools.getToolState(element, 'stack').data[0].imageIds;
-
+        debugger;
         ///////////////////////////////////////////////////////
         // Compute the image size and spacing given the meta data we already have available.
         var metaDataArray = [];
