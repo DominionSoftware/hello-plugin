@@ -1,4 +1,5 @@
 // A test of an OHIFPlugin
+import "dicomMetaDataUtils.js"
 
 try {
     VolumeRenderingPlugin
@@ -71,6 +72,20 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
 
         const element = $('.imageViewerViewport').get(Session.get('activeViewport'));
         const imageIds = cornerstoneTools.getToolState(element, 'stack').data[0].imageIds;
+
+
+
+        var imageIdsAndMeta = [];
+        for (let imageId of imageIds) {
+            var obj = {
+                meta: OHIF.viewer.metadataProvider.getMetadata(imageId),
+                id: imageId
+            };
+            imageIdsAndMeta.push(obj);
+        }
+
+
+
 
         parent.innerHTML = "";
         parent.appendChild(pluginDiv);
