@@ -78,11 +78,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         debugger;
         var imageIdsAndMeta = [];
         for (let imageId of imageIds) {
-            var obj = {
-                meta: cornerstone.getMetadata('imagePlane',imageId),
-                id: imageId
-            };
-            imageIdsAndMeta.push(obj);
+           cornerstone.getMetadata('imagePlane',imageId),
         }
 
 
