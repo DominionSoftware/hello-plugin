@@ -1,6 +1,6 @@
 // A test of an OHIFPlugin
-import "dicomMetaDataUtils.js"
-
+import { OHIF } from 'meteor/ohif:core';
+import { DicomMetaDataUtils } from 'dicomMetaDataUtils.js';
 try {
     VolumeRenderingPlugin
 } catch (error) {
