@@ -311,6 +311,8 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         while (nxt.done === false) {
             nxt.value.then(function (result) {
                 let imageMetaData = metaDataMap.get(result.imageId);
+                let pixels = result.getPixelData();
+                
                 console.log(imageMetaData);
                 //let arrayBuffer = result.data.byteArray.buffer;
                // let dicomData = dcmjs.data.DicomMessage.readFile(arrayBuffer);
