@@ -89,7 +89,7 @@ class DicomMetaDataUtils {
         let index = DicomMetaDataUtils.determineOrientationIndex(orientation);
 
         for (let i = 0; i < metaData.length; i++) {
-            let ipp = metaData.imagePositionPatient;
+            let ipp = metaData[i].imagePositionPatient;
             if (index === 0) {
                 ippArray.push(ipp.x);
             } else if (index === 1) {
