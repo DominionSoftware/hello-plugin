@@ -250,12 +250,12 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
 
         // create color and opacity transfer functions
         this.ctfun = vtk.Rendering.Core.vtkColorTransferFunction.newInstance();
-        this.ctfun.addRGBPoint(200.0, 0.4, 0.2, 0.0);
-        this.ctfun.addRGBPoint(2000.0, 1.0, 1.0, 1.0);
+        this.ctfun.addRGBPoint(10.0, 0.4, 0.2, 0.0);
+        this.ctfun.addRGBPoint(100.0, 1.0, 1.0, 1.0);
         this.ofun = vtk.Common.DataModel.vtkPiecewiseFunction.newInstance();
-        this.ofun.addPoint(200.0, 0.0);
-        this.ofun.addPoint(1200.0, 0.5);
-        this.ofun.addPoint(3000.0, 0.8);
+        this.ofun.addPoint(0.0, 0.0);
+        this.ofun.addPoint(200.0, 0.9);
+        this.ofun.addPoint(1000.0, 0.9);
         this.actor.getProperty().setRGBTransferFunction(0, this.ctfun);
         this.actor.getProperty().setScalarOpacity(0, this.ofun);
         this.actor.getProperty().setScalarOpacityUnitDistance(0, 4.5);
@@ -272,22 +272,24 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         this.actor.getProperty().setSpecularPower(8.0);
         this.imageData = vtk.Common.DataModel.vtkImageData.newInstance();
         this.dataMap = undefined;
+        this.mapper.setSampleDistance(1.0);
+        this.installed = false;
+        this.pluginDiv = undefined;
     }
 
     setup() {
         try {
-            let installed = false;
             let self = this;
             // reset the div that will hold this plugin
             // - remove old ones
             // - add a new one with our id
 
-            let pluginDiv;
-            while (pluginDiv = document.getElementById('volumeRenderingPlugin')) {
-                pluginDiv.parentNode.removeChild(pluginDiv);
+        
+            while (this.pluginDiv = document.getElementById('volumeRenderingPlugin')) {
+                this.pluginDiv.parentNode.removeChild(this.pluginDiv);
             }
-            pluginDiv = document.createElement("div");
-            pluginDiv.id = "volumeRenderingPlugin";
+            this.pluginDiv = document.createElement("div");
+            this.pluginDiv.id = "volumeRenderingPlugin";
 
             // TODO: need a better way for OHIF to tell us what container to take over
             const parent = document.querySelector(".viewportContainer");
@@ -330,12 +332,13 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                 values: pixelArray,
             });
             this.imageData.getPointData().setScalars(scalarArray);
+            this.mapper.setInputData(this.imageData);
             this.dataMap = metaDataMap;
             ///////////////////////////////////////////////////////
 
             parent.innerHTML = "";
-            parent.appendChild(pluginDiv);
-
+            parent.appendChild(this.pluginDiv);
+           
             // Q up the promises.
             let loadImagePromises = [];
             for (let imageId of imageIds) {
@@ -345,16 +348,11 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
 
             // This generator provides a "one at a time" paused iterator.
             const generator = getPromisesGenerator(loadImagePromises);
-            let datasets = [];
-            let partialDatasets = [];
-            let remainderDatasets = [];
-            var datasetsReceived = 0;
-            const TotalNumberOfDatasets = loadImagePromises.length;
-            const NumberInPartialSet = 15;
+            let imagesReceived = 0;
             let nxt = generator.next();
             while (nxt.done === false) {
                 nxt.value.then(function (result) {
-                    debugger;
+                   
                     let imageMetaData = self.dataMap.get(result.imageId);
                     console.log(imageMetaData.imagePositionPatient);
                     let sliceIndex = 0;
@@ -369,47 +367,13 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                     console.log(sliceIndex);
                     let pixels = result.getPixelData();
                     self.insertSlice(pixels,sliceIndex);
-                    //let arrayBuffer = result.data.byteArray.buffer;
-                    // let dicomData = dcmjs.data.DicomMessage.readFile(arrayBuffer);
-                    // let dataset = dcmjs.data.DicomMetaDictionary.naturalizeDataset(dicomData.dict);
-                    //  dataset._meta = dcmjs.data.DicomMetaDictionary.namifyDataset(dicomData.meta);
-
-                    // see if we are close to the end, use the remainder array..
-                    // if (TotalNumberOfDatasets - datasetsReceived < NumberInPartialSet) {
-                    //     datasets = datasets.push(dataset);
-                    //     console.log("remainderDatasets - push");
-                    //     let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
-                    //     if (installed === false) {
-                    //         installed = true;
-                    //         self.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
-                    //     }
-                    //     else {
-                    //         self.updateVTKVolumeRenderer(multiframeDataset);
-                    //     }
-                    // }
-                    // else {
-                    //     partialDatasets.push(dataset);
-                    // }
-                    datasetsReceived++;
-                    console.log("images received " + datasetsReceived);
-
-                    // see if we have number of partial sets of images in the partialDatasets...
-                    // if (partialDatasets.length >= NumberInPartialSet) {
-                    //     datasets = datasets.concat(partialDatasets);
-                    //     partialDatasets = [];
-                    //
-                    //     let multiframeDataset = dcmjs.normalizers.Normalizer.normalizeToDataset(datasets);
-                    //     if (installed === false) {
-                    //         installed = true;
-                    //         self.installVTKVolumeRenderer(pluginDiv, multiframeDataset)
-                    //     }
-                    //     else {
-                    //
-                    //         self.updateVTKVolumeRenderer(multiframeDataset);
-                    //     }
-                    //     console.log("Rendering images");
-                    // }
-
+                    if (self.installed == false) {
+                         self.installVTKVolumeRenderer(self.pluginDiv);
+                         self.installed = true;
+                    }
+                    self.updateVTKVolumeRenderer();
+                    imagesReceived++;
+                    console.log("images received " + imagesReceived);
 
                 }).catch(function (err) {
                     console.log(err);
@@ -422,78 +386,65 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         }
     }
 
-    insertSlice(pixels, index){
-        debugger;
-        const datasetDefinition = this.imageData.get('extent', 'spacing', 'origin');
-       let scalars = this.imageData.getPointData().getScalars();
-       const numberOfComponents = scalars.getNumberOfComponents();
+    computeIndex(extent,incs, xyz)
+    {
+        return ( ((xyz[0] - extent[0]) * incs[0] + (xyz[1] - extent[2]) * incs[1] + (xyz[2] - extent[4]) * incs[2]) | 0);
     }
 
-    updateVTKVolumeRenderer(dataset) {
-        let imageData = vtk.Common.DataModel.vtkImageData.newInstance();
-        imageData.setDimensions([dataset.Columns, dataset.Rows, dataset.NumberOfFrames]);
-        let measures = dataset.SharedFunctionalGroupsSequence.PixelMeasuresSequence;
-        imageData.setSpacing([
-            measures.PixelSpacing[1],
-            measures.PixelSpacing[0],
-            measures.SpacingBetweenSlices
-        ]);
+     computeImageDataIncrements(numberOfComponents) {
+          const datasetDefinition = this.imageData.get('extent', 'spacing', 'origin');
+          let inc = [0,0,0];
+          let incr = numberOfComponents;
+          for (let idx = 0; idx < 3; ++idx)
+          {
+            inc[idx] = incr;
+            incr *= (datasetDefinition.extent[idx*2+1] - datasetDefinition.extent[idx*2] + 1);
+          }
+          return inc;
+    }
 
-        let pixelArray = new Uint16Array(dataset.PixelData);
-        let scalarArray = vtk.Common.Core.vtkDataArray.newInstance({
-            name: "Pixels",
-            numberOfComponents: dataset.SamplesPerPixel,
-            values: pixelArray,
-        });
+    insertSlice(pixels, index){
+        const datasetDefinition = this.imageData.get('extent', 'spacing', 'origin');
+       let scalars = this.imageData.getPointData().getScalars();
+       let increments = this.computeImageDataIncrements(1); // TODO number of components.
+       let data = scalars.getData();
+       let indexXYZ = [0,0,index];
+        let pixelIndex = 0;
+        for (let row = 0; row <= datasetDefinition.extent[3]; row++)
+        {
+            indexXYZ[1] = row;
+            for (let col = 0; col < datasetDefinition.extent[1]; col++)
+            {
+                indexXYZ[0] = col;
+                {
+                   let destIdx = this.computeIndex(datasetDefinition.extent, increments, indexXYZ);
+                   data[destIdx] = pixels[pixelIndex++];
+                }
+            }
+        }
+    }
 
-        this.mapper.setInputData(imageData);
+    updateVTKVolumeRenderer() {
+       
         const renderer = this.volumeViewer.getRenderer();
+         renderer.modified(true);
         const renderWindow = this.volumeViewer.getRenderWindow();
+        renderWindow.modified(true);
         renderWindow.render();
     }
 
 
-    installVTKVolumeRenderer(container, dataset) {
-
-        //
-        // create a new vtkImageData from the dicom dataset
-        //
-        let imageData = vtk.Common.DataModel.vtkImageData.newInstance();
-        imageData.setDimensions([dataset.Columns, dataset.Rows, dataset.NumberOfFrames]);
-        let measures = dataset.SharedFunctionalGroupsSequence.PixelMeasuresSequence;
-        imageData.setSpacing([
-            measures.PixelSpacing[1],
-            measures.PixelSpacing[0],
-            measures.SpacingBetweenSlices
-        ]);
-        // TODO: set origin from ImagePosition
-        // TODO: set directions from ImageOrientation
-
-
-        // set the scalar array from the pixel data
-        // TODO: map the DataRepresentation and PixelsAllocated to vtk scalar types
-        let pixelArray = new Uint16Array(dataset.PixelData);
-        let scalarArray = vtk.Common.Core.vtkDataArray.newInstance({
-            name: "Pixels",
-            numberOfComponents: dataset.SamplesPerPixel,
-            values: pixelArray,
-        });
-        imageData.getPointData().setScalars(scalarArray);
+    installVTKVolumeRenderer(container) {
 
         //
         // Create a volume rendering context
         //
 
         this.volumeViewer.setContainer(container);
-
-
-        this.mapper.setSampleDistance(1.0);
-        this.mapper.setInputData(imageData);
+      
+        
         const renderer = this.volumeViewer.getRenderer();
         const renderWindow = this.volumeViewer.getRenderWindow();
-        renderWindow.render();
-
-
         // TODO - expose transfer function editor
         //
         //  const controllerWidget = vtk.Interaction.UI.vtkVolumeController.newInstance({
@@ -503,7 +454,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         //   controllerWidget.setContainer(container);
         //  controllerWidget.setupContent(renderWindow, actor);
         //
-
+        debugger;
         renderer.addVolume(this.actor);
         renderer.resetCamera();
         renderer.getActiveCamera().zoom(1.5);
