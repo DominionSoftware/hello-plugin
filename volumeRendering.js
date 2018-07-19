@@ -93,9 +93,36 @@ function realsApproximatelyEqual(a,b,eps = 0.00001){
   return Math.abs(a-b) < eps;
 }
 
-function findReal(element, index, array) {
-  return realsApproximatelyEqual(element,array[index]);
+function compareReals(a,b,cmp) {
+  let eq = realsApproximatelyEqual(a,b);
+    if (eq == true)
+        return 0;
+
+    if (a < b) {
+        return -1;
+    }
+    return 1;
 }
+function bsearch(array, value, cmp){
+
+    let low = 0;
+    let high = array.length - 1;
+
+    while(low <= high){
+        let mid = low + (((high - low) / 2) | 0); // avoid overflow when low + high > max for type
+        cmpResult = cmp(array[mid],value);
+        if (cmpResult < 0){
+            low = mid + 1;
+        }
+        else if (cmpResult > 0){
+            high = mid - 1;
+        } else {
+            return mid;
+        }
+    }
+    return undefined;
+}
+
 
 function copyVector(v) {
     return new cornerstoneMath.Vector3(v.x,v.y,v.z);
@@ -330,12 +357,13 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                     console.log(imageMetaData.imagePositionPatient);
                     let sliceIndex = 0;
                     if (zAxis.xyzIndex == 0) {
-                        sliceIndex = zAxis.positions.findIndex(findReal,imageMetaData.imagePositionPatient.x);
+                        sliceIndex = bsearch(zAxis.positions,imageMetaData.imagePositionPatient.x,compareReals);
                     } else if (zAxis.xyzIndex == 1)
-                        sliceIndex = zAxis.positions.findIndex(findReal,imageMetaData.imagePositionPatient.y);
+                         sliceIndex = bsearch(zAxis.positions,imageMetaData.imagePositionPatient.y,compareReals);
                     else{
-                        sliceIndex = zAxis.positions.findIndex(findReal,imageMetaData.imagePositionPatient.z);
+                         sliceIndex = bsearch(zAxis.positions,imageMetaData.imagePositionPatient.z,compareReals);
                     }
+                    
                     console.log(sliceIndex);
                     let pixels = result.getPixelData();
 
