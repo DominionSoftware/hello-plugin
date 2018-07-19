@@ -271,6 +271,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         this.actor.getProperty().setSpecular(0.3);
         this.actor.getProperty().setSpecularPower(8.0);
         this.imageData = vtk.Common.DataModel.vtkImageData.newInstance();
+        this.dataMap = undefined;
     }
 
     setup() {
@@ -329,6 +330,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                 values: pixelArray,
             });
             this.imageData.getPointData().setScalars(scalarArray);
+            this.dataMap = metaDataMap;
             ///////////////////////////////////////////////////////
 
             parent.innerHTML = "";
@@ -353,7 +355,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
             while (nxt.done === false) {
                 nxt.value.then(function (result) {
                     debugger;
-                    let imageMetaData = metaDataMap.get(result.imageId);
+                    let imageMetaData = self.dataMap.get(result.imageId);
                     console.log(imageMetaData.imagePositionPatient);
                     let sliceIndex = 0;
                     if (zAxis.xyzIndex == 0) {
