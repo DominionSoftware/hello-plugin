@@ -366,7 +366,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                     
                     console.log(sliceIndex);
                     let pixels = result.getPixelData();
-
+                    this.insertSlice(pixels,sliceIndex);
                     //let arrayBuffer = result.data.byteArray.buffer;
                     // let dicomData = dcmjs.data.DicomMessage.readFile(arrayBuffer);
                     // let dataset = dcmjs.data.DicomMetaDictionary.naturalizeDataset(dicomData.dict);
@@ -418,6 +418,13 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         catch(error) {
             console.log(error);
         }
+    }
+
+    insertSlice(pixels, index){
+        debugger;
+        const datasetDefinition = this.imageData.get('extent', 'spacing', 'origin');
+       let scalars = this.imageData.getPointData().getScalars();
+       const numberOfComponents = scalars.getNumberOfComponents();
     }
 
     updateVTKVolumeRenderer(dataset) {
