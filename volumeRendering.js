@@ -314,8 +314,8 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
 
             let zAxis = DicomMetaDataUtils.computeZAxis(o, metaDataMap);
             let zSpacing = zAxis.spacing;
-            let xVoxels = metaData0.Columns;
-            let yVoxels = metaData0.Rows;
+            let xVoxels = metaData0.columns;
+            let yVoxels = metaData0.rows;
             let zVoxels = metaDataMap.length;
             debugger;
             this.imageData.setDimensions([xVoxels, yVoxels, zVoxels]);
