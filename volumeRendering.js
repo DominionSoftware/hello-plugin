@@ -366,7 +366,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                     
                     console.log(sliceIndex);
                     let pixels = result.getPixelData();
-                    this.insertSlice(pixels,sliceIndex);
+                    self.insertSlice(pixels,sliceIndex);
                     //let arrayBuffer = result.data.byteArray.buffer;
                     // let dicomData = dcmjs.data.DicomMessage.readFile(arrayBuffer);
                     // let dataset = dcmjs.data.DicomMetaDictionary.naturalizeDataset(dicomData.dict);
