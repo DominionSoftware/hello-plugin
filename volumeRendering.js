@@ -308,8 +308,8 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
             let o = DicomMetaDataUtils.determineOrientation(cp);
 
 
-            let xSpacing = metaData0.xSpacing;
-            let ySpacing = metaData0.ySpacing;
+            let xSpacing = metaData0.columnPixelSpacing;
+            let ySpacing = metaData0.rowPixelSpacing;
 
 
             let zAxis = DicomMetaDataUtils.computeZAxis(o, metaDataMap);
