@@ -5,66 +5,7 @@ try {
 } catch (error) {
     let VolumeRenderingPlugin;
 }
-//TODO separate file? How to do.
-/*************************************************************************************************************************/
-class Slice {
-    constructor() {
-        this.imagePositionPatient = new cornerstoneMath.Vector3(0,0,0);
-        this.xSpacing = 1.0;
-        this.ySpacing = 1.0;
-        this.zSpacing = 1.0;
-        this.imageOrientationPatient = [];
-        this.flipX = false;
-        this.orientation = "";
-        this.pixelData = undefined;
-    }
 
-    setImagePositionPatient(ipp){
-        this.imagePositionPatient = new cornerstoneMath.Vector3(ipp.x,ipp.y,ipp.z);
-    }
-
-    setImageOrientationPatient(iop){
-        this.imageOrientationPatient = [];
-        this.imageOrientationPatient = iop;
-    }
-
-    setXSpacing(s) {
-        this.xSpacing = s;
-    }
-
-    setYSpacing(s) {
-        this.ySpacing = s;
-    }
-
-    setZSpacing(s) {
-        this.zSpacing = s;
-    }
-
-    setFlipX(tf){
-        this.flipX = tf;
-    }
-
-    setOrientation(o){
-        this.orientation = o;
-    }
-
-    print(){
-        try {
-            if (this.imageOrientationPatient === 'undefined') {
-                console.assert(false);
-            }
-            let iop = this.imageOrientationPatient;
-            let xs = this.xSpacing;
-            let ys = this.ySpacing;
-            let zs = this.zSpacing;
-            let ipp = this.imagePositionPatient;
-            console.log(iop[0].x, iop[0].y, iop[0].z, iop[1].x, iop[1].y, iop[1].z, xs, ys, zs, ipp.x, ipp.y, ipp.z);
-        }
-        catch(error) {
-            console.assert(false);
-        }
-    }
-}
 
 //TODO separate file? How to do.
 /*************************************************************************************************************************/
@@ -229,7 +170,7 @@ class DicomMetaDataUtils {
 
 function* getPromisesGenerator(a) {
     for (let i = 0; i < a.length; i++) {
-        yield a[i];
+         yield a[i];
     }
 }
 
@@ -265,14 +206,14 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         this.actor.getProperty().setGradientOpacityMinimumOpacity(0, 0.0);
         this.actor.getProperty().setGradientOpacityMaximumValue(0, 100);
         this.actor.getProperty().setGradientOpacityMaximumOpacity(0, 1.0);
-        this.actor.getProperty().setShade(true);
-        this.actor.getProperty().setAmbient(0.2);
+       //this.actor.getProperty().setShade(true);
+        this.actor.getProperty().setAmbient(0.7);
         this.actor.getProperty().setDiffuse(0.7);
         this.actor.getProperty().setSpecular(0.3);
         this.actor.getProperty().setSpecularPower(8.0);
         this.imageData = vtk.Common.DataModel.vtkImageData.newInstance();
         this.dataMap = undefined;
-        this.mapper.setSampleDistance(1.0);
+        this.mapper.setSampleDistance(0.8);
         this.installed = false;
         this.pluginDiv = undefined;
     }
@@ -296,7 +237,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
 
             const element = $('.imageViewerViewport').get(Session.get('activeViewport'));
             const imageIds = cornerstoneTools.getToolState(element, 'stack').data[0].imageIds;
-            debugger;
+           
             ///////////////////////////////////////////////////////
             // Compute the image size and spacing given the meta data we already have available.
             let metaDataMap = new Map;
@@ -320,7 +261,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
             let xVoxels = metaData0.columns;
             let yVoxels = metaData0.rows;
             let zVoxels = metaDataMap.size;
-            debugger;
+    
             this.imageData.setDimensions([xVoxels, yVoxels, zVoxels]);
 
             this.imageData.setSpacing([xSpacing, ySpacing, zSpacing]);
@@ -370,8 +311,11 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                     if (self.installed == false) {
                          self.installVTKVolumeRenderer(self.pluginDiv);
                          self.installed = true;
+                    } else {
+                       setTimeout(function(){
+                            self.updateVTKVolumeRenderer();
+                        },30);
                     }
-                    self.updateVTKVolumeRenderer();
                     imagesReceived++;
                     console.log("images received " + imagesReceived);
 
@@ -388,7 +332,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
 
     computeIndex(extent,incs, xyz)
     {
-        return ( ((xyz[0] - extent[0]) * incs[0] + (xyz[1] - extent[2]) * incs[1] + (xyz[2] - extent[4]) * incs[2]) | 0);
+        return ( ( ((xyz[0] - extent[0]) * incs[0]) +((xyz[1] - extent[2]) * incs[1]) + ((xyz[2] - extent[4]) * incs[2])) | 0);
     }
 
      computeImageDataIncrements(numberOfComponents) {
@@ -407,29 +351,31 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         const datasetDefinition = this.imageData.get('extent', 'spacing', 'origin');
        let scalars = this.imageData.getPointData().getScalars();
        let increments = this.computeImageDataIncrements(1); // TODO number of components.
-       let data = scalars.getData();
+       let scalarData = scalars.getData();
+
        let indexXYZ = [0,0,index];
         let pixelIndex = 0;
         for (let row = 0; row <= datasetDefinition.extent[3]; row++)
         {
             indexXYZ[1] = row;
-            for (let col = 0; col < datasetDefinition.extent[1]; col++)
+            for (let col = 0; col <= datasetDefinition.extent[1]; col++)
             {
                 indexXYZ[0] = col;
                 {
                    let destIdx = this.computeIndex(datasetDefinition.extent, increments, indexXYZ);
-                   data[destIdx] = pixels[pixelIndex++];
+                   scalarData[destIdx] = pixels[pixelIndex++];
                 }
             }
         }
+        this.imageData.modified();
+      
     }
 
     updateVTKVolumeRenderer() {
-       
-        const renderer = this.volumeViewer.getRenderer();
-         renderer.modified(true);
+        
         const renderWindow = this.volumeViewer.getRenderWindow();
-        renderWindow.modified(true);
+         const renderer = this.volumeViewer.getRenderer();
+         renderer.updateLightsGeometryToFollowCamera();
         renderWindow.render();
     }
 
@@ -454,11 +400,12 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         //   controllerWidget.setContainer(container);
         //  controllerWidget.setupContent(renderWindow, actor);
         //
-        debugger;
+   
         renderer.addVolume(this.actor);
         renderer.resetCamera();
-        renderer.getActiveCamera().zoom(1.5);
+ 
         renderer.getActiveCamera().elevation(70);
+        renderer.getActiveCamera().yaw(20);
         renderer.updateLightsGeometryToFollowCamera();
         renderWindow.render();
     }
