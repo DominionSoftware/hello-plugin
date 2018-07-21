@@ -7,7 +7,7 @@ try {
 }
 
 
-//TODO separate file? How to do.
+//TODO separate file? How to do?
 /*************************************************************************************************************************/
 
 function sum(array) {
@@ -30,6 +30,7 @@ function diff(array) {
     return resultArray;
 }
 
+// eps is up to you to determine based on your application.
 function realsApproximatelyEqual(a,b,eps = 0.00001){
   return Math.abs(a-b) < eps;
 }
@@ -44,6 +45,7 @@ function compareReals(a,b,cmp) {
     }
     return 1;
 }
+
 function bsearch(array, value, cmp){
 
     let low = 0;
@@ -76,6 +78,8 @@ class DicomMetaDataUtils {
 
     }
 
+    // Based on David Clunie's various postings
+    // on the dicom google groupd.
     static determineOrientation(v) {
 
         let axis = undefined;
@@ -100,6 +104,8 @@ class DicomMetaDataUtils {
         return axis;
     }
 
+    // given the text orientation, determine the index (0,1,2)
+    // of the z axis 
     static determineOrientationIndex(orientation) {
         var o = orientation;
         var index = undefined;
@@ -123,6 +129,10 @@ class DicomMetaDataUtils {
         return index;
     }
 
+    // Given the orientation, determine the coordinates of the z axis
+    // i.e. the z axis per the DICOM xray or other device relative to the
+    // patient. Also, determine the average spacing along that axis, and 
+    // return the index (0,1,2) of the z axis.
     static computeZAxis(orientation, metaData) {
         var ippArray = [];
         let index = DicomMetaDataUtils.determineOrientationIndex(orientation);
@@ -151,23 +161,12 @@ class DicomMetaDataUtils {
         }
         return obj;
     }
-
-    static makeSlice(ipp,iop,pixels){
-        let s = new Slice();
-        let newIPP = copyVector(ipp);
-        s.setImagePositionPatient(newIPP);
-        s.setZSpacing(spacingZ);
-        s.setYSpacing(spacingY);
-        s.setXSpacing(spacingX);
-        s.setOrientation(orientation);
-        s.setImageOrientationPatient(iop);
-        s.pixelData = pixels;
-        return s;
-    }
 }
 
 /*************************************************************************************************************************/
 
+// NOTE yield pauses this function. Refer to documentation
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators
 function* getPromisesGenerator(a) {
     for (let i = 0; i < a.length; i++) {
          yield a[i];
@@ -216,6 +215,9 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         this.mapper.setSampleDistance(0.8);
         this.installed = false;
         this.pluginDiv = undefined;
+        this.metaData0 = undefined;
+        this.zSpacing = 0;
+        this.zVoxels = 0;
     }
 
     setup() {
@@ -244,32 +246,32 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
             for (let i = 0; i < imageIds.length; i++) {
                 metaDataMap.set(imageIds[i], cornerstone.metaData.get('imagePlane', imageIds[i]));
             }
-            let metaData0 = metaDataMap.values().next().value;
+            this.metaData0 = metaDataMap.values().next().value;
 
-            let cc = metaData0.columnCosines;
-            let rc = metaData0.rowCosines;
+            let cc = this.metaData0.columnCosines;
+            let rc = this.metaData0.rowCosines;
             let cp = cc.crossVectors(cc, rc);
             let o = DicomMetaDataUtils.determineOrientation(cp);
 
 
-            let xSpacing = metaData0.columnPixelSpacing;
-            let ySpacing = metaData0.rowPixelSpacing;
+            let xSpacing = this.metaData0.columnPixelSpacing;
+            let ySpacing = this.metaData0.rowPixelSpacing;
 
 
             let zAxis = DicomMetaDataUtils.computeZAxis(o, metaDataMap);
-            let zSpacing = zAxis.spacing;
-            let xVoxels = metaData0.columns;
-            let yVoxels = metaData0.rows;
-            let zVoxels = metaDataMap.size;
-    
-            this.imageData.setDimensions([xVoxels, yVoxels, zVoxels]);
+            this.zSpacing = zAxis.spacing;
+            let xVoxels = this.metaData0.columns;
+            let yVoxels = this.metaData0.rows;
+            this.zVoxels = metaDataMap.size;
+            
+            this.imageData.setDimensions([xVoxels, yVoxels, this.zVoxels]);
 
-            this.imageData.setSpacing([xSpacing, ySpacing, zSpacing]);
-            let pixelArray = new Int16Array(xVoxels * yVoxels * zVoxels);
+            this.imageData.setSpacing([xSpacing, ySpacing, this.zSpacing]);
+            let pixelArray = new Int16Array(xVoxels * yVoxels * this.zVoxels);
 
             let scalarArray = vtk.Common.Core.vtkDataArray.newInstance({
                 name: "Pixels",
-                numberOfComponents: metaData0.SamplesPerPixel,
+                numberOfComponents: this.metaData0.SamplesPerPixel,
                 values: pixelArray,
             });
             this.imageData.getPointData().setScalars(scalarArray);
@@ -402,11 +404,18 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         //
    
         renderer.addVolume(this.actor);
+    
+        let xCtr = this.metaData0.imagePositionPatient.x + ((this.metaData0.columns * this.metaData0.columnPixelSpacing) / 2.0)
+        let yCtr = this.metaData0.imagePositionPatient.y + ((this.metaData0.rows * this.metaData0.rowPixelSpacing) / 2.0)
+        let zCtr = this.metaData0.imagePositionPatient.z + ((this.zVoxels * this.zSpacing) / 2.0);
+     
+        this.actor.setPosition([this.metaData0.imagePositionPatient.x,this.metaData0.imagePositionPatient.y,this.metaData0.imagePositionPatient.z]);
+
+        let bounds = this.actor.getBounds();
+        console.log(bounds);
+       
         renderer.resetCamera();
- 
-        renderer.getActiveCamera().elevation(70);
-        renderer.getActiveCamera().yaw(20);
-        renderer.updateLightsGeometryToFollowCamera();
+       
         renderWindow.render();
     }
 
