@@ -332,11 +332,12 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         }
     }
 
+    // Based on vtkImageData.cxx (vtkDataset)
     computeIndex(extent,incs, xyz)
     {
         return ( ( ((xyz[0] - extent[0]) * incs[0]) +((xyz[1] - extent[2]) * incs[1]) + ((xyz[2] - extent[4]) * incs[2])) | 0);
     }
-
+    // Based on vtkImageData.cxx (vtkDataset)
     computeImageDataIncrements(numberOfComponents) {
         const datasetDefinition = this.imageData.get('extent', 'spacing', 'origin');
         let inc = [0,0,0];
@@ -349,6 +350,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         return inc;
     }
 
+    // insert the slice at the z index location.
     insertSlice(pixels, index){
         const datasetDefinition = this.imageData.get('extent', 'spacing', 'origin');
         let scalars = this.imageData.getPointData().getScalars();
@@ -373,6 +375,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
 
     }
 
+    // update the renderer.
     updateVTKVolumeRenderer() {
 
         const renderWindow = this.volumeViewer.getRenderWindow();
@@ -381,7 +384,8 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         renderWindow.render();
     }
 
-
+    // install the volume renderer into the web page.
+    // you should only do this once.
     installVTKVolumeRenderer(container) {
 
         //
