@@ -314,9 +314,9 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
                         self.installVTKVolumeRenderer(self.pluginDiv);
                         self.installed = true;
                     } else {
-                        setTimeout(function(){
+                        if (((imagesReceived % 5) | 0) == 0){
                             self.updateVTKVolumeRenderer();
-                        },30);
+                        }
                     }
                     imagesReceived++;
                     console.log("images received " + imagesReceived);
@@ -330,6 +330,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         catch(error) {
             console.log(error);
         }
+         self.updateVTKVolumeRenderer();
     }
 
     // Based on vtkImageData.cxx (vtkDataset)
