@@ -32,11 +32,11 @@ function diff(array) {
 
 // eps is up to you to determine based on your application.
 function realsApproximatelyEqual(a,b,eps = 0.00001){
-  return Math.abs(a-b) < eps;
+    return Math.abs(a-b) < eps;
 }
 
 function compareReals(a,b,cmp) {
-  let eq = realsApproximatelyEqual(a,b);
+    let eq = realsApproximatelyEqual(a,b);
     if (eq == true)
         return 0;
 
@@ -169,7 +169,7 @@ class DicomMetaDataUtils {
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators
 function* getPromisesGenerator(a) {
     for (let i = 0; i < a.length; i++) {
-         yield a[i];
+        yield a[i];
     }
 }
 
@@ -205,7 +205,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         this.actor.getProperty().setGradientOpacityMinimumOpacity(0, 0.0);
         this.actor.getProperty().setGradientOpacityMaximumValue(0, 100);
         this.actor.getProperty().setGradientOpacityMaximumOpacity(0, 1.0);
-       //this.actor.getProperty().setShade(true);
+        //this.actor.getProperty().setShade(true);
         this.actor.getProperty().setAmbient(0.7);
         this.actor.getProperty().setDiffuse(0.7);
         this.actor.getProperty().setSpecular(0.3);
@@ -227,7 +227,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
             // - remove old ones
             // - add a new one with our id
 
-        
+
             while (this.pluginDiv = document.getElementById('volumeRenderingPlugin')) {
                 this.pluginDiv.parentNode.removeChild(this.pluginDiv);
             }
@@ -239,7 +239,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
 
             const element = $('.imageViewerViewport').get(Session.get('activeViewport'));
             const imageIds = cornerstoneTools.getToolState(element, 'stack').data[0].imageIds;
-           
+
             ///////////////////////////////////////////////////////
             // Compute the image size and spacing given the meta data we already have available.
             let metaDataMap = new Map;
@@ -263,7 +263,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
             let xVoxels = this.metaData0.columns;
             let yVoxels = this.metaData0.rows;
             this.zVoxels = metaDataMap.size;
-            
+
             this.imageData.setDimensions([xVoxels, yVoxels, this.zVoxels]);
 
             this.imageData.setSpacing([xSpacing, ySpacing, this.zSpacing]);
@@ -281,7 +281,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
 
             parent.innerHTML = "";
             parent.appendChild(this.pluginDiv);
-           
+
             // Q up the promises.
             let loadImagePromises = [];
             for (let imageId of imageIds) {
@@ -295,26 +295,26 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
             let nxt = generator.next();
             while (nxt.done === false) {
                 nxt.value.then(function (result) {
-                   
+
                     let imageMetaData = self.dataMap.get(result.imageId);
                     console.log(imageMetaData.imagePositionPatient);
                     let sliceIndex = 0;
                     if (zAxis.xyzIndex == 0) {
                         sliceIndex = bsearch(zAxis.positions,imageMetaData.imagePositionPatient.x,compareReals);
                     } else if (zAxis.xyzIndex == 1)
-                         sliceIndex = bsearch(zAxis.positions,imageMetaData.imagePositionPatient.y,compareReals);
+                        sliceIndex = bsearch(zAxis.positions,imageMetaData.imagePositionPatient.y,compareReals);
                     else{
-                         sliceIndex = bsearch(zAxis.positions,imageMetaData.imagePositionPatient.z,compareReals);
+                        sliceIndex = bsearch(zAxis.positions,imageMetaData.imagePositionPatient.z,compareReals);
                     }
-                    
+
                     console.log(sliceIndex);
                     let pixels = result.getPixelData();
                     self.insertSlice(pixels,sliceIndex);
                     if (self.installed == false) {
-                         self.installVTKVolumeRenderer(self.pluginDiv);
-                         self.installed = true;
+                        self.installVTKVolumeRenderer(self.pluginDiv);
+                        self.installed = true;
                     } else {
-                       setTimeout(function(){
+                        setTimeout(function(){
                             self.updateVTKVolumeRenderer();
                         },30);
                     }
@@ -337,25 +337,25 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         return ( ( ((xyz[0] - extent[0]) * incs[0]) +((xyz[1] - extent[2]) * incs[1]) + ((xyz[2] - extent[4]) * incs[2])) | 0);
     }
 
-     computeImageDataIncrements(numberOfComponents) {
-          const datasetDefinition = this.imageData.get('extent', 'spacing', 'origin');
-          let inc = [0,0,0];
-          let incr = numberOfComponents;
-          for (let idx = 0; idx < 3; ++idx)
-          {
+    computeImageDataIncrements(numberOfComponents) {
+        const datasetDefinition = this.imageData.get('extent', 'spacing', 'origin');
+        let inc = [0,0,0];
+        let incr = numberOfComponents;
+        for (let idx = 0; idx < 3; ++idx)
+        {
             inc[idx] = incr;
             incr *= (datasetDefinition.extent[idx*2+1] - datasetDefinition.extent[idx*2] + 1);
-          }
-          return inc;
+        }
+        return inc;
     }
 
     insertSlice(pixels, index){
         const datasetDefinition = this.imageData.get('extent', 'spacing', 'origin');
-       let scalars = this.imageData.getPointData().getScalars();
-       let increments = this.computeImageDataIncrements(1); // TODO number of components.
-       let scalarData = scalars.getData();
+        let scalars = this.imageData.getPointData().getScalars();
+        let increments = this.computeImageDataIncrements(1); // TODO number of components.
+        let scalarData = scalars.getData();
 
-       let indexXYZ = [0,0,index];
+        let indexXYZ = [0,0,index];
         let pixelIndex = 0;
         for (let row = 0; row <= datasetDefinition.extent[3]; row++)
         {
@@ -364,20 +364,20 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
             {
                 indexXYZ[0] = col;
                 {
-                   let destIdx = this.computeIndex(datasetDefinition.extent, increments, indexXYZ);
-                   scalarData[destIdx] = pixels[pixelIndex++];
+                    let destIdx = this.computeIndex(datasetDefinition.extent, increments, indexXYZ);
+                    scalarData[destIdx] = pixels[pixelIndex++];
                 }
             }
         }
         this.imageData.modified();
-      
+
     }
 
     updateVTKVolumeRenderer() {
-        
+
         const renderWindow = this.volumeViewer.getRenderWindow();
-         const renderer = this.volumeViewer.getRenderer();
-         renderer.updateLightsGeometryToFollowCamera();
+        const renderer = this.volumeViewer.getRenderer();
+        renderer.updateLightsGeometryToFollowCamera();
         renderWindow.render();
     }
 
@@ -389,8 +389,8 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         //
 
         this.volumeViewer.setContainer(container);
-      
-        
+
+
         const renderer = this.volumeViewer.getRenderer();
         const renderWindow = this.volumeViewer.getRenderWindow();
         // TODO - expose transfer function editor
@@ -402,20 +402,20 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         //   controllerWidget.setContainer(container);
         //  controllerWidget.setupContent(renderWindow, actor);
         //
-   
+
         renderer.addVolume(this.actor);
-    
+
         let xCtr = this.metaData0.imagePositionPatient.x + ((this.metaData0.columns * this.metaData0.columnPixelSpacing) / 2.0)
         let yCtr = this.metaData0.imagePositionPatient.y + ((this.metaData0.rows * this.metaData0.rowPixelSpacing) / 2.0)
         let zCtr = this.metaData0.imagePositionPatient.z + ((this.zVoxels * this.zSpacing) / 2.0);
-     
+
         this.actor.setPosition([this.metaData0.imagePositionPatient.x,this.metaData0.imagePositionPatient.y,this.metaData0.imagePositionPatient.z]);
 
         let bounds = this.actor.getBounds();
         console.log(bounds);
-       
+
         renderer.resetCamera();
-       
+
         renderWindow.render();
     }
 
