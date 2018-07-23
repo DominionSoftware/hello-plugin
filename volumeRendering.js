@@ -1,5 +1,6 @@
 // A test of an OHIFPlugin
 
+
 try {
     VolumeRenderingPlugin
 } catch (error) {
@@ -72,96 +73,91 @@ function copyVector(v) {
 }
 
 
-class DicomMetaDataUtils {
 
-    constructor() {
+// Based on David Clunie's various postings
+// on the dicom google groupd.
+function determineOrientation(v) {
 
+    let axis = undefined;
+    const oX = v.x < 0 ? 'R' : 'L';
+    const oY = v.y < 0 ? 'A' : 'P';
+    const oZ = v.z < 0 ? 'I' : 'S';
+
+    const aX = Math.abs(v.x);
+    const aY = Math.abs(v.y);
+    const aZ = Math.abs(v.z);
+    const obliqueThreshold = 0.8;
+    if (aX > obliqueThreshold && aX > aY && aX > aZ) {
+        axis = oX;
     }
-
-    // Based on David Clunie's various postings
-    // on the dicom google groupd.
-    static determineOrientation(v) {
-
-        let axis = undefined;
-        const oX = v.x < 0 ? 'R' : 'L';
-        const oY = v.y < 0 ? 'A' : 'P';
-        const oZ = v.z < 0 ? 'I' : 'S';
-
-        const aX = Math.abs(v.x);
-        const aY = Math.abs(v.y);
-        const aZ = Math.abs(v.z);
-        const obliqueThreshold = 0.8;
-        if (aX > obliqueThreshold && aX > aY && aX > aZ) {
-            axis = oX;
-        }
-        else if (aY > obliqueThreshold && aY > aX && aY > aZ) {
-            axis = oY;
-        }
-        else if (aZ > obliqueThreshold && aZ > aX && aZ > aY) {
-            axis = oZ;
-        }
-        this.orientation = axis;
-        return axis;
+    else if (aY > obliqueThreshold && aY > aX && aY > aZ) {
+        axis = oY;
     }
-
-    // given the text orientation, determine the index (0,1,2)
-    // of the z axis 
-    static determineOrientationIndex(orientation) {
-        var o = orientation;
-        var index = undefined;
-        switch (o) {
-            case 'A':
-            case 'P':
-                index = 1;
-                break;
-            case 'L':
-            case 'R':
-                index = 0;
-                break;
-            case 'S':
-            case 'I':
-                index = 2;
-                break;
-            default:
-                console.assert(false, " OBLIQUE NOT SUPPORTED");
-                break;
-        }
-        return index;
+    else if (aZ > obliqueThreshold && aZ > aX && aZ > aY) {
+        axis = oZ;
     }
-
-    // Given the orientation, determine the coordinates of the z axis
-    // i.e. the z axis per the DICOM xray or other device relative to the
-    // patient. Also, determine the average spacing along that axis, and 
-    // return the index (0,1,2) of the z axis.
-    static computeZAxis(orientation, metaData) {
-        var ippArray = [];
-        let index = DicomMetaDataUtils.determineOrientationIndex(orientation);
-
-        for (var value of metaData.values()) {
-            let ipp = value.imagePositionPatient;
-            if (index === 0) {
-                ippArray.push(ipp.x);
-            } else if (index === 1) {
-                ippArray.push(ipp.y);
-            } else {
-                ippArray.push(ipp.z);
-            }
-        }
-
-        ippArray.sort(function (a, b) {
-            return a - b;
-        });
-        let meanSpacing = mean(diff(ippArray));
-
-        console.log(meanSpacing);
-        var obj = {
-            spacing: meanSpacing,
-            positions: ippArray,
-            xyzIndex: index
-        }
-        return obj;
-    }
+    this.orientation = axis;
+    return axis;
 }
+
+// given the text orientation, determine the index (0,1,2)
+// of the z axis
+function determineOrientationIndex(orientation) {
+    var o = orientation;
+    var index = undefined;
+    switch (o) {
+        case 'A':
+        case 'P':
+            index = 1;
+            break;
+        case 'L':
+        case 'R':
+            index = 0;
+            break;
+        case 'S':
+        case 'I':
+            index = 2;
+            break;
+        default:
+            console.assert(false, " OBLIQUE NOT SUPPORTED");
+            break;
+    }
+    return index;
+}
+
+// Given the orientation, determine the coordinates of the z axis
+// i.e. the z axis per the DICOM xray or other device relative to the
+// patient. Also, determine the average spacing along that axis, and
+// return the index (0,1,2) of the z axis.
+function computeZAxis(orientation, metaData) {
+    var ippArray = [];
+    let index = determineOrientationIndex(orientation);
+
+    for (var value of metaData.values()) {
+        let ipp = value.imagePositionPatient;
+        if (index === 0) {
+            ippArray.push(ipp.x);
+        } else if (index === 1) {
+            ippArray.push(ipp.y);
+        } else {
+            ippArray.push(ipp.z);
+        }
+    }
+
+    ippArray.sort(function (a, b) {
+        return a - b;
+    });
+    let meanSpacing = mean(diff(ippArray));
+
+    console.log(meanSpacing);
+    var obj = {
+        spacing: meanSpacing,
+        positions: ippArray,
+        xyzIndex: index
+    }
+    return obj;
+}
+
 
 /*************************************************************************************************************************/
 
@@ -251,14 +247,14 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
             let cc = this.metaData0.columnCosines;
             let rc = this.metaData0.rowCosines;
             let cp = cc.crossVectors(cc, rc);
-            let o = DicomMetaDataUtils.determineOrientation(cp);
+            let o = determineOrientation(cp);
 
 
             let xSpacing = this.metaData0.columnPixelSpacing;
             let ySpacing = this.metaData0.rowPixelSpacing;
 
 
-            let zAxis = DicomMetaDataUtils.computeZAxis(o, metaDataMap);
+            let zAxis = computeZAxis(o, metaDataMap);
             this.zSpacing = zAxis.spacing;
             let xVoxels = this.metaData0.columns;
             let yVoxels = this.metaData0.rows;
@@ -295,7 +291,12 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
             let nxt = generator.next();
             while (nxt.done === false) {
                 nxt.value.then(function (result) {
+                    if (window.performance && window.performance.memory){
+                        console.log("total %d MB %d GB", window.performance.memory.totalJSHeapSize / 1024,window.performance.memory.totalJSHeapSize / (1024 * 1024) );
+                        console.log("used %d MB %d GB", window.performance.memory.usedJSHeapSize / 1024, window.performance.memory.usedJSHeapSize / (1024 * 1024) );
+                        console.log("limit %d MB %d GB" , window.performance.memory.jsHeapSizeLimit  / 1024,window.performance.memory.jsHeapSizeLimit / (1024 * 1024) );
 
+                    }
                     let imageMetaData = self.dataMap.get(result.imageId);
                     console.log(imageMetaData.imagePositionPatient);
                     let sliceIndex = 0;
@@ -330,7 +331,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
         catch(error) {
             console.log(error);
         }
-         self.updateVTKVolumeRenderer();
+        this.updateVTKVolumeRenderer();
     }
 
     // Based on vtkImageData.cxx (vtkDataset)
@@ -338,6 +339,7 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
     {
         return ( ( ((xyz[0] - extent[0]) * incs[0]) +((xyz[1] - extent[2]) * incs[1]) + ((xyz[2] - extent[4]) * incs[2])) | 0);
     }
+
     // Based on vtkImageData.cxx (vtkDataset)
     computeImageDataIncrements(numberOfComponents) {
         const datasetDefinition = this.imageData.get('extent', 'spacing', 'origin');
@@ -410,17 +412,18 @@ VolumeRenderingPlugin = class VolumeRenderingPlugin extends OHIFPlugin {
 
         renderer.addVolume(this.actor);
 
+        // TODO it seems there's bugs with positioning the actor at different spots in the world.
+        // The clipping range etc. get's messed up. We default to the "defualts" for now rather than
+        // positioning in patient relative space.
         let xCtr = this.metaData0.imagePositionPatient.x + ((this.metaData0.columns * this.metaData0.columnPixelSpacing) / 2.0)
         let yCtr = this.metaData0.imagePositionPatient.y + ((this.metaData0.rows * this.metaData0.rowPixelSpacing) / 2.0)
         let zCtr = this.metaData0.imagePositionPatient.z + ((this.zVoxels * this.zSpacing) / 2.0);
 
-        this.actor.setPosition([this.metaData0.imagePositionPatient.x,this.metaData0.imagePositionPatient.y,this.metaData0.imagePositionPatient.z]);
-
         let bounds = this.actor.getBounds();
-        console.log(bounds);
-
+      
+        let cam =  renderer.getActiveCamera();
         renderer.resetCamera();
-
+        
         renderWindow.render();
     }
 
